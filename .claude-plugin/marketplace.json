@@ -1,0 +1,14 @@
+{
+  "name": "rb",
+  "owner": {
+    "name": "Roman Bolgov"
+  },
+  "description": "Roman Bolgov's skills for real engineering, as an installable Claude Code plugin.",
+  "plugins": [
+    {
+      "name": "rb-skills",
+      "source": "./",
+      "description": "Roman Bolgov's agent skills for real engineering (grilling, spec/ticket flows, TDD, code review, domain modelling and more)."
+    }
+  ]
+}

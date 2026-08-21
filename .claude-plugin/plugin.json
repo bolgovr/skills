@@ -1,0 +1,27 @@
+{
+  "name": "rb-skills",
+  "version": "1.2.3",
+  "description": "Roman Bolgov's agent skills for real engineering: grilling, domain modelling, implementation, and handoff workflows.",
+  "author": {
+    "name": "Roman Bolgov"
+  },
+  "repository": "https://github.com/bolgovr/skills",
+  "license": "MIT",
+  "keywords": [
+    "engineering",
+    "skills",
+    "grilling",
+    "domain-modeling",
+    "productivity"
+  ],
+  "skills": [
+    "./skills/claude-handoff",
+    "./skills/domain-modeling",
+    "./skills/grill-with-docs",
+    "./skills/grilling",
+    "./skills/implement",
+    "./skills/loop-me",
+    "./skills/quality-gate",
+    "./skills/setup-repo-skills"
+  ]
+}

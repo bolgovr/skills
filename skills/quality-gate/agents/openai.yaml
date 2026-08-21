@@ -1,0 +1,3 @@
+interface:
+  display_name: "Quality Gate"
+  short_description: "Run language-specific build/lint/test checks before calling work done"
