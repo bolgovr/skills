@@ -15,6 +15,7 @@
     "productivity"
   ],
   "skills": [
+    "./skills/architecture-principles",
     "./skills/claude-handoff",
     "./skills/domain-modeling",
     "./skills/grill-with-docs",

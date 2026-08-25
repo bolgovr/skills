@@ -1,6 +1,6 @@
 ---
 name: implement
-description: "Implement a piece of work based on a spec or set of tickets."
+description: "Implement a piece of work based on a spec or set of tickets, using clean architecture and SOLID principles."
 disable-model-invocation: true
 ---
 
@@ -8,9 +8,9 @@ Implement the work described by the user in the spec or tickets.
 
 Make sure all code paths are covered with unit tests.
 
-Structure new code per [clean-architecture.md](./clean-architecture.md): keep business rules (Entities, Use Cases) free of framework, UI, and database code, and make dependencies point inward per The Dependency Rule. Put new logic in the layer it belongs to rather than reaching for whatever file is already open.
+Call the Skill tool with "architecture-principles" for the clean architecture and SOLID reference, then apply it as you go: keep business rules (Entities, Use Cases) free of framework, UI, and database code, make dependencies point inward per The Dependency Rule, and put new logic in the layer it belongs to rather than reaching for whatever file is already open.
 
-Follow [solid.md](./solid.md) for every class or interface you write or touch: single responsibility, open for extension, substitutable subtypes, segregated interfaces, dependency on abstractions. Check new code against it before moving to the next slice, not as a pass at the end.
+Follow SOLID for every class or interface you write or touch: single responsibility, open for extension, substitutable subtypes, segregated interfaces, dependency on abstractions. Check new code against it before moving to the next slice, not as a pass at the end.
 
 
 ## Testing
@@ -38,13 +38,13 @@ Red flags:
 - Verifying through external means instead of interface
 
 ### Mocking
-Mock at the **Frameworks and Drivers** boundary from [clean-architecture.md](./clean-architecture.md#frameworks-and-drivers): the concrete "detail" behind an interface a Use Case or Entity owns, never the business rule itself.
+Mock at the Frameworks and Drivers boundary (see architecture-principles): the concrete "detail" behind an interface a Use Case or Entity owns, never the business rule itself.
 - External APIs (payment, email, etc.)
 - Databases
 - Time/randomness
 - File system (sometimes)
 
-Never mock a Use Case, an Entity, or the Interface Adapter between them (Controller, Presenter, [Use Case Output](./clean-architecture.md#use-case-output)) — those are the layers the test exists to verify.
+Never mock a Use Case, an Entity, or the Interface Adapter between them (Controller, Presenter, Use Case Output): those are the layers the test exists to verify.
 
 
 
@@ -58,7 +58,7 @@ Ask: "What's the public interface, and which seams should we test?"
 
 When the shape of that interface is itself in question (how deep the module is, where the seam belongs, what the interface should expose), call the Skill tool with "codebase-design" for the vocabulary. It is the shared source of the module, interface, depth, seam, adapter, leverage and locality terms, and it is a reference to consult, not a session to run.
 
-A seam commonly falls at a layer boundary from [clean-architecture.md](./clean-architecture.md): Controller → Use Case, Use Case → Use Case Output, Use Case → Entity. See Mocking above for what to fake at those boundaries.
+A seam commonly falls at a layer boundary (see architecture-principles): Controller → Use Case, Use Case → Use Case Output, Use Case → Entity. See Mocking above for what to fake at those boundaries.
 
 ## Anti-patterns
 

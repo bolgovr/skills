@@ -1,0 +1,3 @@
+interface:
+  display_name: "Architecture Principles"
+  short_description: "Clean architecture layering and SOLID reference"

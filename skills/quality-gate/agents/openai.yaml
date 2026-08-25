@@ -1,3 +1,3 @@
 interface:
   display_name: "Quality Gate"
-  short_description: "Run language-specific build/lint/test checks before calling work done"
+  short_description: "Run build/lint/test checks and clean architecture/SOLID review before calling work done"
