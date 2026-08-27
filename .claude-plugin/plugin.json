@@ -17,12 +17,14 @@
   "skills": [
     "./skills/architecture-principles",
     "./skills/claude-handoff",
+    "./skills/code-review",
     "./skills/domain-modeling",
     "./skills/grill-with-docs",
     "./skills/grilling",
     "./skills/implement",
     "./skills/loop-me",
     "./skills/quality-gate",
-    "./skills/setup-repo-skills"
+    "./skills/setup-repo-skills",
+    "./skills/to-tickets"
   ]
 }

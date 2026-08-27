@@ -31,12 +31,14 @@ Reachable only by typing the skill's name.
 - [`implement`](./skills/implement/SKILL.md): implement a piece of work based on a spec or set of tickets.
 - [`loop-me`](./skills/loop-me/SKILL.md): grill the user about specs for the workflows they want to build, within this workspace.
 - [`setup-repo-skills`](./skills/setup-repo-skills/SKILL.md): configure a repo for the engineering skills, its issue tracker, triage label vocabulary, and domain doc layout. Run once before first use of the other engineering skills.
+- [`to-tickets`](./skills/to-tickets/SKILL.md): break a plan, spec, or the current conversation into tracer-bullet tickets with blocking edges, published to the configured tracker.
 
 ### Model-invoked
 
 Reachable by the model or the user.
 
 - [`architecture-principles`](./skills/architecture-principles/SKILL.md): clean architecture layering and SOLID principles, as a reference for structuring or reviewing code.
+- [`code-review`](./skills/code-review/SKILL.md): review the changes since a fixed point along two axes, standards and spec, via parallel sub-agents.
 - [`domain-modeling`](./skills/domain-modeling/SKILL.md): build and sharpen a project's domain model, writing or editing `CONTEXT.md` and ADRs.
 - [`grilling`](./skills/grilling/SKILL.md): grill the user relentlessly about a plan, decision, or idea, stress-testing their thinking round by round.
 - [`quality-gate`](./skills/quality-gate/SKILL.md): run the language-appropriate quality gate (build, lint, typecheck, tests) before implementation work is considered done, and check the change against clean architecture and SOLID.
