@@ -2,13 +2,24 @@
 name: implement
 description: "Implement a piece of work based on a spec or set of tickets, using clean architecture and SOLID principles."
 disable-model-invocation: true
+hooks:
+  PreToolUse:
+    - matcher: "Bash"
+      hooks:
+        - type: command
+          command: "${CLAUDE_SKILL_DIR}/scripts/block-commit-on-main.sh"
 ---
 
 Implement the work described by the user in the spec or tickets.
 
-Make sure all code paths are covered with unit tests.
+## Before you start
 
-Call the Skill tool with "architecture-principles" for the clean architecture and SOLID reference, then apply it as you go: keep business rules (Entities, Use Cases) free of framework, UI, and database code, make dependencies point inward per The Dependency Rule, and put new logic in the layer it belongs to rather than reaching for whatever file is already open.
+1. **Work in a git worktree.** Every implement or fix session gets its own worktree, so parallel sessions never share a checkout. If the session is already in a linked worktree (`git rev-parse --git-dir` differs from `git rev-parse --git-common-dir`), stay there. Otherwise, in Claude Code, call the EnterWorktree tool; where that tool isn't available, stop and tell the user to relaunch with `claude --worktree`. Any sub-agent you spawn to implement or fix part of the work runs isolated too (`isolation: "worktree"` on the Agent tool).
+2. **Branch off a fresh `origin/main`.** Run `git fetch && git switch -c <type>/<issue>-<slug> origin/main`, where `<type>` is the change kind (`feat`, `fix`, `refactor`, `chore`, `docs`, `test`), `<issue>` is the ticket number, and `<slug>` is a few kebab-case words from its title. If the repo's default branch isn't `main`, use `origin/<default>` instead (`git symbolic-ref --short refs/remotes/origin/HEAD`).
+
+Never commit or push on `main` or `master`. While this skill is active, a PreToolUse hook (`scripts/block-commit-on-main.sh`) blocks `git commit` and `git push` on either branch.
+
+Make sure all code paths are covered with unit tests.
 
 Follow SOLID for every class or interface you write or touch: single responsibility, open for extension, substitutable subtypes, segregated interfaces, dependency on abstractions. Check new code against it before moving to the next slice, not as a pass at the end.
 
@@ -76,6 +87,8 @@ A seam commonly falls at a layer boundary (see architecture-principles): Control
 
 Run typechecking regularly, single test files regularly, and the full test suite + /quality-gate once at the end.
 
+Run any long command (the full test suite, a build) with `run_in_background: true` and end your turn; its completion notification re-invokes you. Do the same after spawning sub-agents. To wait on a condition inside a running process, use the Monitor tool with an until-loop.
+
 Once done, use /code-review to review the work.
 
-Commit your work to the current branch, push the code and open a Pull Request.
+Commit your work to the feature branch created above, push it, and open a Pull Request against the default branch.
