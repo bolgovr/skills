@@ -16,6 +16,7 @@ Diff the working tree against the last commit (or the branch's merge-base with i
 
 For each language below, match if either its marker file exists at the repo root (or an ancestor of a changed file) or a changed file has one of its extensions:
 
+- **Dart / Flutter**: `pubspec.yaml`, `*.dart` → [dart-template.md](./dart-template.md)
 - **Go**: `go.mod`, `*.go` → [go-template.md](./go-template.md)
 - **Swift**: `Package.swift`, `*.xcodeproj`, `*.xcworkspace`, `*.swift` → [swift-template.md](./swift-template.md)
 - **TypeScript**: `tsconfig.json`, `*.ts`, `*.tsx` → [typescript-template.md](./typescript-template.md)
