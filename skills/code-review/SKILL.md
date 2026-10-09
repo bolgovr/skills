@@ -35,6 +35,8 @@ Look for the originating spec, in this order:
 
 Anything in the repo that documents how code should be written, such as `CODING_STANDARDS.md` or `CONTRIBUTING.md`.
 
+The clean architecture and SOLID reference in the `architecture-principles` skill is a standards source too, even when the repo documents nothing. The Standards sub-agent calls the Skill tool with "architecture-principles" and reads the diff against it: an inner layer naming something from an outer layer (a Use Case or Entity importing a framework, UI, or database type) breaks the Dependency Rule and is a hard violation; a SOLID finding (a class with more than one reason to change, a concrete dependency where an interface belongs) is a judgement call, like a baseline smell. The same two rules as the baseline bind it: the repo overrides, and skip anything tooling enforces.
+
 On top of whatever the repo documents, the Standards axis always carries the **smell baseline** below: a fixed set of Fowler code smells (_Refactoring_, ch.3) that applies even when a repo documents nothing. Two rules bind it:
 
 - **The repo overrides.** A documented repo standard always wins; where it endorses something the baseline would flag, suppress the smell.
@@ -60,8 +62,8 @@ Each smell reads *what it is* → *how to fix*; match it against the diff:
 **Standards sub-agent prompt** should include:
 
 - The full diff command and commit list.
-- The list of standards-source files you found in step 3, **plus the smell baseline from step 3** pasted in full (the sub-agent has no other access to it).
-- The brief: "Report, per file/hunk where relevant, (a) every place the diff violates a documented standard: cite the standard (file + the rule); and (b) any baseline smell you spot: name it and quote the hunk. Distinguish hard violations from judgement calls: documented-standard breaches can be hard, but baseline smells are always judgement calls, and a documented repo standard overrides the baseline. Skip anything tooling enforces. Under 400 words."
+- The list of standards-source files you found in step 3, **plus the smell baseline from step 3** pasted in full (the sub-agent has no other access to it), **plus the instruction to call the Skill tool with "architecture-principles"** before reading the diff.
+- The brief: "Report, per file/hunk where relevant, (a) every place the diff violates a documented standard: cite the standard (file + the rule); (b) any baseline smell you spot: name it and quote the hunk; (c) any Dependency Rule violation (an inner layer naming an outer-layer type) or SOLID finding from the architecture-principles reference: quote the hunk. Distinguish hard violations from judgement calls: documented-standard breaches and Dependency Rule violations are hard, baseline smells and SOLID findings are always judgement calls, and a documented repo standard overrides both the baseline and the architecture reference. Skip anything tooling enforces. Under 400 words."
 
 **Spec sub-agent prompt** should include:
 
@@ -70,6 +72,8 @@ Each smell reads *what it is* → *how to fix*; match it against the diff:
 - The brief: "Report: (a) requirements the spec asked for that are missing or partial; (b) behaviour in the diff that wasn't asked for (scope creep); (c) requirements that look implemented but where the implementation looks wrong. Quote the spec line for each finding. Under 400 words."
 
 If the spec is missing, skip the Spec sub-agent and note this in the final report.
+
+After spawning, end your turn. Each sub-agent's completion notification re-invokes you; aggregate once both have reported.
 
 ### 5. Aggregate
 
