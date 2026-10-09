@@ -7,7 +7,8 @@ hooks:
     - matcher: "Bash"
       hooks:
         - type: command
-          command: "${CLAUDE_SKILL_DIR}/scripts/block-commit-on-main.sh"
+          # CLAUDE_SKILL_DIR is not exported to hook processes, so probe each install location.
+          command: 'for d in "$CLAUDE_SKILL_DIR" "$CLAUDE_PLUGIN_ROOT/skills/implement" "$CLAUDE_PROJECT_DIR/.claude/skills/implement" "$HOME/.claude/skills/implement"; do [ -n "$d" ] && [ -x "$d/scripts/block-commit-on-main.sh" ] && exec "$d/scripts/block-commit-on-main.sh"; done; echo "implement: block-commit-on-main.sh not found, commit guard inactive" >&2; exit 1'
 ---
 
 Implement the work described by the user in the spec or tickets.
