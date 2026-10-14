@@ -90,6 +90,6 @@ Run typechecking regularly, single test files regularly, and the full test suite
 
 Run any long command (the full test suite, a build) with `run_in_background: true` and end your turn; its completion notification re-invokes you. Do the same after spawning sub-agents. To wait on a condition inside a running process, use the Monitor tool with an until-loop.
 
-Once done, use /code-review to review the work.
+Once done, use /observable to improve observability, and /code-review to review the work.
 
 Commit your work to the feature branch created above, push it, and open a Pull Request against the default branch.

@@ -23,6 +23,7 @@
     "./skills/grilling",
     "./skills/implement",
     "./skills/loop-me",
+    "./skills/observable",
     "./skills/quality-gate",
     "./skills/retro",
     "./skills/setup-repo-skills",

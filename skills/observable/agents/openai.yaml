@@ -1,0 +1,3 @@
+interface:
+  display_name: "Observable"
+  short_description: "Structured logging discipline for features that run in production"
