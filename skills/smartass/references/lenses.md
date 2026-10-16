@@ -22,6 +22,8 @@ Call the Skill tool with "architecture-principles" first.
 
 Look for: module boundaries and dependency direction, coupling hotspots, duplicated logic, god modules, abstractions with a single implementation, dead code, and code that fights or reimplements its framework (a hand-rolled router, cache, ORM, or state store). Evidence: paths, import relationships, file and function sizes.
 
+Leave docs, tooling, and checks to Dev loop, and dependency resolution to Stack fit.
+
 ## Stack fit
 
 Inventory the language and runtime versions, frameworks, and major dependencies. For each major piece:
@@ -34,6 +36,8 @@ Then the language itself: does the codebase's dominant pain, as shown by evidenc
 
 Use web search for the current status of every tool you recommend adopting or dropping, and of each current major dependency. Cite the links.
 
+You own dependency resolution: what the repo relies on and whether it is declared. Leave docs and checks to Dev loop.
+
 ## Dev loop
 
 - **Clone to green**: the steps from a fresh clone to passing tests, and whether the docs describe them accurately.
@@ -43,6 +47,8 @@ Use web search for the current status of every tool you recommend adopting or dr
 - **Docs and onboarding**: README accuracy, stale or contradictory docs.
 
 Time a clean build and the test suite only if the brief allows it.
+
+You own stale or inaccurate docs and every missing automated check. Leave script and hook internals to Correctness & security.
 
 ## History
 
@@ -55,7 +61,7 @@ From git, over the last 12 months (or the whole history, if shorter):
 - **Bus factor**: areas where one author made most of the changes (`git shortlog -sn -- <path>`).
 - **Frozen areas**: code nobody has touched for a long time while its surroundings churn.
 
-Report numbers, not impressions.
+Report numbers, not impressions. Report what history shows (churn, fixes, coupling); leave the content of stale files to Dev loop.
 
 ## Correctness & security
 
@@ -63,7 +69,9 @@ Report numbers, not impressions.
 - **Risky patterns**: unvalidated input, string-built queries, secrets in the repo, unsafe deserialization, swallowed errors.
 - **Supply chain**: lockfile present and committed, version pinning, audit command output, abandoned dependencies.
 
-Also list the **migration constraints**: behaviour any rewrite or framework swap must preserve but nothing currently protects (untested behaviour, implicit contracts, data formats). The orchestrator vetoes any proposal that would break one. These go after your findings and don't count toward the 8.
+Also list the **migration constraints**: behaviour any rewrite or framework swap must preserve but nothing currently protects (untested behaviour, implicit contracts, data formats). The orchestrator vetoes any proposal whose migration path doesn't preserve one. These go after your findings and don't count toward the 8.
+
+You own script and hook internals. Leave missing checks and stale docs to Dev loop.
 
 ## Devil's advocate
 

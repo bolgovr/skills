@@ -61,7 +61,7 @@ After spawning, end your turn. Each completion notification re-invokes you; move
 ### 3. Rank
 
 1. Merge duplicates across lenses, keeping the strongest evidence.
-2. Apply the gate: any proposal that breaks a **migration constraint** from the Correctness & security lens, or weakens correctness or security, is vetoed.
+2. Apply the gate: a proposal is vetoed if it weakens correctness or security, or if its migration path doesn't preserve a **migration constraint** from the Correctness & security lens. Touching a constraint is fine; losing it is not.
 3. Score the rest on the weighted criteria and sort them into tiers: **Quick wins**, **Structural**, **Burn it down**.
 4. Pick **the bet**: the single change you would make if you could make only one.
 5. Against the previous report, mark each finding **new** or **still open since <date>**, and list previous findings that are gone as **fixed**. A finding still open after several reports earns a remark.
