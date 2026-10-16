@@ -5,6 +5,7 @@
 # back to the agent; exit 0 lets it through.
 # A guardrail against accidents, not a sandbox: it matches generously and
 # fails closed when it can't read the payload.
+# Tested by scripts/test-block-commit-on-main.sh.
 
 payload=$(cat)
 
