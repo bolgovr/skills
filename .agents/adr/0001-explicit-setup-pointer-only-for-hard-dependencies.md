@@ -8,3 +8,7 @@ We split these into **hard-dependency** and **soft-dependency** skills:
 - **Soft dependency** (`diagnose`, `tdd`, `improve-codebase-architecture`): reference "the project's domain glossary" and "ADRs in the area you're touching" in vague prose only. If the docs aren't there, the skill still works; output is just less sharp.
 
 The split keeps soft-dependency skills token-light and avoids cargo-culting the setup pointer into places where it isn't load-bearing.
+
+## Update, 2026-10-16
+
+This record was inherited from upstream. In this fork `/setup-matt-pocock-skills` is `/setup-repo-skills`, and of the skills named above only `to-tickets` ships here. It is still a hard dependency, now on the issue tracker alone: the triage label vocabulary was removed along with the upstream `triage` skill it served. The split itself still holds.
