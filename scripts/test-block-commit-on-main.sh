@@ -7,6 +7,11 @@ set -uo pipefail
 # hook PreToolUse payloads, and checks its exit code (2 blocks, 0 allows).
 
 REPO="$(cd "$(dirname "$0")/.." && pwd)"
+
+# Inside a git hook, GIT_DIR and friends point at the repo being committed to.
+# Clear them so the throwaway repos below are separate repos, not a re-init of
+# that one (which would flip its core.bare to true).
+while IFS= read -r var; do unset "$var"; done < <(git rev-parse --local-env-vars)
 HOOK="$REPO/skills/implement/scripts/block-commit-on-main.sh"
 
 tmp=$(mktemp -d)

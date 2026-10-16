@@ -1,6 +1,6 @@
 {
   "name": "rb-skills",
-  "version": "1.2.5",
+  "version": "1.2.6",
   "description": "Roman Bolgov's agent skills for real engineering: grilling, domain modelling, implementation, and handoff workflows.",
   "author": {
     "name": "Roman Bolgov"
