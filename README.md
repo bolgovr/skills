@@ -32,6 +32,7 @@ Reachable only by typing the skill's name.
 - [`loop-me`](./skills/loop-me/SKILL.md): grill the user about specs for the workflows they want to build, within this workspace.
 - [`retro`](./skills/retro/SKILL.md): run a retrospective on a coding session and suggest improvements to the agent's environment (navigation, checks, standards, tooling).
 - [`setup-repo-skills`](./skills/setup-repo-skills/SKILL.md): configure a repo for the engineering skills, its issue tracker, triage label vocabulary, and domain doc layout. Run once before first use of the other engineering skills.
+- [`smartass`](./skills/smartass/SKILL.md): a staff-engineer audit of the repo that ignores the status quo and proposes evidence-backed overhauls, from quick wins up to framework swaps or rewrites.
 - [`to-tickets`](./skills/to-tickets/SKILL.md): break a plan, spec, or the current conversation into tracer-bullet tickets with blocking edges, published to the configured tracker.
 
 ### Model-invoked
