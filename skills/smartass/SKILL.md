@@ -1,6 +1,6 @@
 ---
 name: smartass
-description: "Staff-engineer audit of a repo that ignores the status quo and proposes evidence-backed overhauls, up to framework swaps or rewrites."
+description: "Staff-engineer audit that ignores the status quo and proposes evidence-backed overhauls for a repo, up to framework swaps or rewrites."
 disable-model-invocation: true
 argument-hint: "[path | topic | process]"
 ---
@@ -43,7 +43,7 @@ You are the orchestrator: sub-agents do the reading, you rank, challenge, and wr
    - None: the whole repo.
    - A path: every lens is scoped to that subtree, except History still reports coupling that crosses its boundary.
    - A topic ("CI", "the data layer"): run only the lenses that bear on it.
-   - `process`: run only Stack fit and Dev loop as a light pass, then go to step 6.
+   - `process`: run only Stack fit and Dev loop as a light pass, rank and report them (steps 3 and 5; skip step 4 if nothing lands in Structural or Burn it down), then go straight into step 6.
 2. **Detect the repo shape**: languages, package managers, workspaces. With more than 5 packages, ask which to audit. Otherwise audit them all, tag findings by package, and treat cross-package structure as its own area.
 3. **Prepare `.smartass/`.** Add `.smartass/` to `$(git rev-parse --git-path info/exclude)` if it isn't there. If `.smartass/report.md` exists, read it, then move it to `.smartass/report-<date>.md` using the date in its title.
 4. **Ask once** whether the Dev loop lens may time a real build and test run. Without a yes, it doesn't run them.
