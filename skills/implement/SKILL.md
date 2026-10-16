@@ -7,8 +7,9 @@ hooks:
     - matcher: "Bash"
       hooks:
         - type: command
-          # CLAUDE_SKILL_DIR is not exported to hook processes, so probe each install location.
-          command: 'for d in "$CLAUDE_SKILL_DIR" "$CLAUDE_PLUGIN_ROOT/skills/implement" "$CLAUDE_PROJECT_DIR/.claude/skills/implement" "$HOME/.claude/skills/implement"; do [ -n "$d" ] && [ -x "$d/scripts/block-commit-on-main.sh" ] && exec "$d/scripts/block-commit-on-main.sh"; done; echo "implement: block-commit-on-main.sh not found, commit guard inactive" >&2; exit 1'
+          # CLAUDE_SKILL_DIR is not exported to hook processes, so probe each install location, user-level before project-level.
+          # If the guard script can't be found, fail closed: block anything that looks like a commit or push.
+          command: 'for d in "$CLAUDE_SKILL_DIR" "$CLAUDE_PLUGIN_ROOT/skills/implement" "$HOME/.claude/skills/implement" "$HOME/.agents/skills/implement" "$CLAUDE_PROJECT_DIR/.claude/skills/implement"; do [ -n "$d" ] && [ -x "$d/scripts/block-commit-on-main.sh" ] && exec "$d/scripts/block-commit-on-main.sh"; done; if grep -Eq "git.*(commit|push)"; then echo "implement: block-commit-on-main.sh not found, so git commit/push is blocked until the guard is restored" >&2; exit 2; fi'
 ---
 
 Implement the work described by the user in the spec or tickets.
@@ -21,7 +22,7 @@ You are the **orchestrator**. You plan, talk to the user, dispatch sub-agents, a
 2. **Branch off a fresh `origin/main`.** Run `git fetch && git switch -c <type>/<issue>-<slug> origin/main`, where `<type>` is the change kind (`feat`, `fix`, `refactor`, `chore`, `docs`, `test`), `<issue>` is the ticket number, and `<slug>` is a few kebab-case words from its title. If the repo's default branch isn't `main`, use `origin/<default>` instead (`git symbolic-ref --short refs/remotes/origin/HEAD`).
 3. **Create the plan file.** Write `.implement/plan.md` (see below) and add `.implement/` to the file `git rev-parse --git-path info/exclude` prints, unless it's already listed. That keeps the plan out of every commit without touching the repo's `.gitignore`.
 
-Never commit or push on `main` or `master`. While this skill is active, a PreToolUse hook (`scripts/block-commit-on-main.sh`) blocks `git commit` and `git push` on either branch in your session. Sub-agents may not inherit that hook, so the brief also has them check the branch before every commit.
+Never commit or push on `main` or `master`. While this skill is active, a PreToolUse hook (`scripts/block-commit-on-main.sh`) blocks `git commit` and `git push` on either branch in your session, and any push that targets one. Sub-agents may not inherit that hook, so the brief also has them check the branch before every commit.
 
 ## The plan file
 
