@@ -13,83 +13,89 @@ hooks:
 
 Implement the work described by the user in the spec or tickets.
 
+You are the **orchestrator**. You plan, talk to the user, dispatch sub-agents, and read their reports. You never edit source files or run tests yourself: anything that reads widely or produces long output (exploring, the test loop, builds, the quality gate) runs in a sub-agent, so your context stays small for the whole session.
+
 ## Before you start
 
-1. **Work in a git worktree.** Every implement or fix session gets its own worktree, so parallel sessions never share a checkout. If the session is already in a linked worktree (`git rev-parse --git-dir` differs from `git rev-parse --git-common-dir`), stay there. Otherwise, in Claude Code, call the EnterWorktree tool; where that tool isn't available, stop and tell the user to relaunch with `claude --worktree`. Any sub-agent you spawn to implement or fix part of the work runs isolated too (`isolation: "worktree"` on the Agent tool).
+1. **Work in a git worktree.** Every implement or fix session gets its own worktree, so parallel sessions never share a checkout. If the session is already in a linked worktree (`git rev-parse --git-dir` differs from `git rev-parse --git-common-dir`), stay there. Otherwise, in Claude Code, call the EnterWorktree tool; where that tool isn't available, stop and tell the user to relaunch with `claude --worktree`. Sub-agents work in this same worktree, one at a time. Only a sub-agent that runs in parallel with another writer gets its own (`isolation: "worktree"` on the Agent tool).
 2. **Branch off a fresh `origin/main`.** Run `git fetch && git switch -c <type>/<issue>-<slug> origin/main`, where `<type>` is the change kind (`feat`, `fix`, `refactor`, `chore`, `docs`, `test`), `<issue>` is the ticket number, and `<slug>` is a few kebab-case words from its title. If the repo's default branch isn't `main`, use `origin/<default>` instead (`git symbolic-ref --short refs/remotes/origin/HEAD`).
+3. **Create the plan file.** Write `.implement/plan.md` (see below) and add `.implement/` to the file `git rev-parse --git-path info/exclude` prints, unless it's already listed. That keeps the plan out of every commit without touching the repo's `.gitignore`.
 
-Never commit or push on `main` or `master`. While this skill is active, a PreToolUse hook (`scripts/block-commit-on-main.sh`) blocks `git commit` and `git push` on either branch.
+Never commit or push on `main` or `master`. While this skill is active, a PreToolUse hook (`scripts/block-commit-on-main.sh`) blocks `git commit` and `git push` on either branch in your session. Sub-agents may not inherit that hook, so the brief also has them check the branch before every commit.
 
-Make sure all code paths are covered with unit tests.
+## The plan file
 
-Follow SOLID for every class or interface you write or touch: single responsibility, open for extension, substitutable subtypes, segregated interfaces, dependency on abstractions. Check new code against it before moving to the next slice, not as a pass at the end.
+`.implement/plan.md` is the session's durable state and the brief every sub-agent reads first. Keep it short:
 
+- **Spec**: the tickets or spec path, one line each.
+- **Seams**: one line per confirmed seam, in implementation order, with its status (`todo`, `in progress`, `done`, `blocked`).
+- **Decisions**: the user's answers and the sub-agents' local choices, one line each.
 
-## Testing
-This section is reference that makes that loop produce tests worth keeping: what a good test is, where tests go, the anti-patterns, and the rules of the loop. Every section applies on every cycle: consult them before and during the loop, not after.
+Update it after every report. After a context compaction, re-read it instead of re-asking anyone.
 
-When exploring the codebase, read `CONTEXT.md` (if it exists) so test names and interface vocabulary match the project's domain language, and respect ADRs in the area you're touching.
+## Flow
 
-### What a good test is
+After dispatching a sub-agent, end your turn; its completion notification re-invokes you.
 
-Tests verify behavior through public interfaces, not implementation details. Code can change entirely; tests shouldn't. A good test reads like a specification: "user can checkout with valid cart" tells you exactly what capability exists, and it survives refactors because it doesn't care about internal structure.
-Characteristics:
+1. **Explore.** Dispatch an `Explore` sub-agent to read `CONTEXT.md` and the ADRs in the area, find the code the spec touches, and propose candidate seams. It is read-only, so you write its findings into the plan file.
+2. **Confirm seams with the user.** This step stays with you; see Seams below. No seam agent starts before its seam is confirmed.
+3. **Implement one seam at a time.** For each confirmed seam, in plan order, dispatch a `general-purpose` seam agent, then mark the seam in the plan from its report. Seams run in sequence because later ones usually build on what earlier ones produced.
+   - `needs-decision`: put the question to the user, record the answer under Decisions, then resume the same agent with SendMessage (or dispatch a fresh one if it's gone).
+   - `blocked`: decide the next step with the user. Don't start the next seam on top of a broken one.
+4. **Observability.** Dispatch a `general-purpose` observable agent.
+5. **Quality gate.** Dispatch a `general-purpose` gate agent.
+6. **Review.** Call the Skill tool with "code-review" yourself, with `origin/<default>` as the fixed point. It runs its own sub-agents.
+7. **Fix review findings.** If the review found anything, dispatch one `general-purpose` review-fix agent with all the findings. It escalates the same way seam agents do and reruns the gate before it commits.
+8. **Sync with the default branch.** Run `git fetch` and `git log --oneline HEAD..origin/<default>`. If it lists anything, others have landed work since you branched: dispatch a `general-purpose` sync agent to rebase onto it and rerun the gate. If it lists nothing, move on.
+9. **Ship.** Check `git status` is clean and skim `git log --oneline origin/<default>..HEAD`. Then push the feature branch and open a Pull Request against the default branch.
 
-- Tests behavior users/callers care about
-- Uses public API only
-- Survives internal refactors
-- Describes WHAT, not HOW
-- One logical assertion per test
+## Seams
 
-Red flags:
-- Mocking internal collaborators
-- Testing private methods
-- Asserting on call counts/order
-- Test breaks when refactoring without behavior change
-- Test name describes HOW not WHAT
-- Verifying through external means instead of interface
+A **seam** is the public boundary tests go at: the interface where you observe behavior without reaching inside. Tests live at seams, never against internals.
 
-### Mocking
-Mock at the Frameworks and Drivers boundary (see architecture-principles): the concrete "detail" behind an interface a Use Case or Entity owns, never the business rule itself.
-- External APIs (payment, email, etc.)
-- Databases
-- Time/randomness
-- File system (sometimes)
-
-Never mock a Use Case, an Entity, or the Interface Adapter between them (Controller, Presenter, Use Case Output): those are the layers the test exists to verify.
-
-
-
-## Seams: where tests go
-
-A **seam** is the public boundary you test at: the interface where you observe behavior without reaching inside. Tests live at seams, never against internals.
-
-**Test only at pre-agreed seams.** Before writing any test, write down the seams under test and confirm them with the user. No test is written at an unconfirmed seam. You can't test everything, so agreeing the seams up front is how testing effort lands on the critical paths and complex logic instead of every edge case.
+**Test only at pre-agreed seams.** Before any seam agent starts, write down the seams under test and confirm them with the user. You can't test everything, so agreeing the seams up front is how testing effort lands on the critical paths and complex logic instead of every edge case.
 
 Ask: "What's the public interface, and which seams should we test?"
 
 When the shape of that interface is itself in question (how deep the module is, where the seam belongs, what the interface should expose), call the Skill tool with "codebase-design" for the vocabulary. It is the shared source of the module, interface, depth, seam, adapter, leverage and locality terms, and it is a reference to consult, not a session to run.
 
-A seam commonly falls at a layer boundary (see architecture-principles): Controller → Use Case, Use Case → Use Case Output, Use Case → Entity. See Mocking above for what to fake at those boundaries.
+A seam commonly falls at a layer boundary (see architecture-principles): Controller → Use Case, Use Case → Use Case Output, Use Case → Entity.
 
-## Anti-patterns
+## Sub-agent brief
 
-- **Implementation-coupled**: mocks internal collaborators, tests private methods, or verifies through a side channel (querying the database instead of using the interface). The tell: the test breaks when you refactor but behavior hasn't changed.
-- **Tautological**: the assertion recomputes the expected value the way the code does (`expect(add(a, b)).toBe(a + b)`, a snapshot derived by hand the same way, a constant asserted equal to itself), so it passes by construction and can never disagree with the code. Expected values must come from an independent source of truth: a known-good literal, a worked example, the spec.
-- **Horizontal slicing**: writing all tests first, then all implementation. Bulk tests verify _imagined_ behavior: you test the _shape_ of things rather than user-facing behavior, the tests go insensitive to real changes, and you commit to test structure before understanding the implementation. Work in **vertical slices** instead: one test → one implementation → repeat, each test a **tracer bullet** that responds to what the last cycle taught you.
+Build every brief from this template. Fill the placeholders and swap in the role line for the agent you're dispatching:
 
+```
+You are the <role> sub-agent of an implement session.
+Worktree: <absolute path>. Branch: <branch>. Stay on this branch.
+Read .implement/plan.md first.
 
-## Rules of the loop
+<role line>
 
-- **Red before green.** Write the failing test first, then only enough code to pass it. Don't anticipate future tests or add speculative features.
-- **One slice at a time.** One seam, one test, one minimal implementation per cycle.
-- **Refactoring is not part of the loop.** It belongs to the review stage (see the `code-review` skill), not the implementation cycle.
+Escalate, don't decide: if the work would change a confirmed seam or a public
+interface, or add a dependency, stop and report needs-decision with the question.
+Make local implementation choices yourself and add each to the plan's Decisions.
 
+Commit to the current branch once your work is green, after confirming
+`git branch --show-current` is neither main nor master. Never push.
 
-Run typechecking regularly, single test files regularly, and the full test suite + /quality-gate once at the end.
+Reply with this report and nothing else, at most 15 lines. Never paste logs or diffs.
+status: done | blocked | needs-decision
+files: <changed paths>
+tests: <names of tests added>
+result: <one line: tests and typecheck>
+notes: <questions, surprises, decisions made>
+```
 
-Run any long command (the full test suite, a build) with `run_in_background: true` and end your turn; its completion notification re-invokes you. Do the same after spawning sub-agents. To wait on a condition inside a running process, use the Monitor tool with an until-loop.
+Role lines (`<skill dir>` is the base directory the harness gave when this skill was invoked):
 
-Once done, use /observable to improve observability, and /code-review to review the work.
+- **explore**: Read `CONTEXT.md` and the ADRs in the area, find the code the spec touches, and propose candidate seams (the public interface, what sits behind it, where its tests go). Change nothing and don't commit. Instead of the standard report, reply with the relevant files and the candidate seams, one line each, at most 25 lines.
+- **seam**: Implement seam `<name>` from the plan, test-first. Read `<skill dir>/references/tdd.md` before writing anything and follow it on every cycle.
+- **observable**: Call the Skill tool with "observable" and apply it to this branch's changes since `origin/<default>`.
+- **gate**: Run the full test suite and call the Skill tool with "quality-gate". Fix what fails and rerun, at most 3 rounds; if it's still red, report `blocked` with the remaining failures in one line each.
+- **review-fix**: Apply these review findings: `<findings>`. Then run the full test suite and the quality gate as the gate role does, before you commit.
+- **sync**: Rebase this branch onto `origin/<default>`. Resolve conflicts so both sides' intent survives; a conflict that needs a design call is a `needs-decision`, so run `git rebase --abort` and report it. Once rebased, run the full test suite and the quality gate as the gate role does, and commit any fixes.
 
-Commit your work to the feature branch created above, push it, and open a Pull Request against the default branch.
+## Without a sub-agent tool
+
+Where there is no tool for dispatching sub-agents, run the same flow inline, in the same order, with the same plan file. Treat each role line as your checklist for that step, and read `references/tdd.md` before the first seam.
