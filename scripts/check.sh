@@ -11,7 +11,7 @@ cd "$REPO" || exit 1
 
 # Skills referenced here but not shipped: they come from the upstream
 # mattpocock-skills plugin and resolve only when it is installed alongside.
-EXTERNAL_SKILLS="codebase-design writing-for-agents triage wayfinder to-spec improve-codebase-architecture"
+EXTERNAL_SKILLS="codebase-design writing-for-agents"
 # Slash names that are Claude Code built-in commands, not skills.
 BUILTIN_COMMANDS="plugin"
 

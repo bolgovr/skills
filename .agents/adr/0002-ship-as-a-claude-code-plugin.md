@@ -43,3 +43,9 @@ Verified 2026-08-05, on Claude Code 2.1.222, against the live listing:
 ## Update, 2026-10-16
 
 In this fork `skills/` is flat, with no buckets, so every skill ships. A `skills` array in `.claude-plugin/plugin.json` only adds directories to the default `skills/` scan; it can't exclude any. Verified on this repo with `claude --plugin-dir . plugin details rb-skills`: all 14 skills load with the full array, with an entry removed, and with no `skills` key. The array was removed, and the first invariant above no longer applies.
+
+This record was inherited from upstream, and several other parts don't describe this fork either:
+
+- There is no `package.json`. The second invariant above becomes: bump `.claude-plugin/plugin.json`'s `version` on its own whenever what the plugin ships changes.
+- The 2026-08-05 update describes upstream's `mattpocock-skills` listing in the official marketplace, not this fork.
+- The Codex deferral rested on bucket folders that no longer exist. A native Codex plugin was considered again and declined: `scripts/link-skills.sh` already links every skill into `~/.agents/skills`.
