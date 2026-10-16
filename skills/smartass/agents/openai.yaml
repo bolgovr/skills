@@ -1,0 +1,5 @@
+interface:
+  display_name: "Smartass"
+  short_description: "Status-quo-blind staff engineer audit of a repo"
+policy:
+  allow_implicit_invocation: false
