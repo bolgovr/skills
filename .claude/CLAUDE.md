@@ -1,6 +1,6 @@
 Skills are organized into folders under `skills/`:
 
-Every skill must have a reference in the top-level `README.md` and an entry in `.claude-plugin/plugin.json`'s `skills` array (the Claude Code plugin ships exactly the promoted set).
+Every skill must have a reference in the top-level `README.md`. The Claude Code plugin ships every skill folder under `skills/` (its default scan), so there is no manifest list to update.
 
 Install commands are copied verbatim from [.agents/install-block.md](../.agents/install-block.md). Run `claude plugin validate . --strict` after touching either manifest.
 

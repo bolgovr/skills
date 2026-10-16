@@ -39,3 +39,7 @@ Verified 2026-08-05, on Claude Code 2.1.222, against the live listing:
 - `claude plugin details mattpocock-skills` then reports version 1.2.0 and loads the promoted skills.
 - The listing's `source` is `{"source": "url", "url": "https://github.com/mattpocock/skills.git", "sha": …}`: the **sha is pinned**, so a release reaches installed users when that pin moves, not the moment we tag. At the time of writing the pin sits two commits behind `main`, which is why it lists 22 skills rather than the 24 in `plugin.json`.
 - The in-session `/plugin install mattpocock-skills` was **not** exercised: `/plugin` is unavailable in headless (`claude -p`) sessions. It runs the same resolver as the CLI, and the documented example form is `/plugin install <name>@claude-plugins-official`.
+
+## Update, 2026-10-16
+
+In this fork `skills/` is flat, with no buckets, so every skill ships. A `skills` array in `.claude-plugin/plugin.json` only adds directories to the default `skills/` scan; it can't exclude any. Verified on this repo with `claude --plugin-dir . plugin details rb-skills`: all 14 skills load with the full array, with an entry removed, and with no `skills` key. The array was removed, and the first invariant above no longer applies.
