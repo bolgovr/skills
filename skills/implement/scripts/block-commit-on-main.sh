@@ -40,21 +40,23 @@ cwd=${cwd:-.}
 # `git commit` / `git push`, allowing global options in between (`git -C dir
 # commit`), anywhere in a compound command, including inside `$(...)`,
 # backticks, quotes (`sh -c "git commit"`), and via a path (`/usr/bin/git`).
-git_re='(^|[^[:alnum:]_.-])git([[:space:]]+-[^[:space:]]+([[:space:]]+[^-[:space:]][^[:space:]]*)?)*[[:space:]]+'
+# An option's argument may be quoted (`git -C "My Repo" commit`).
+git_re="(^|[^[:alnum:]_.-])git([[:space:]]+-[^[:space:]]+([[:space:]]+(\"[^\"]*\"|'[^']*'|[^-[:space:]][^[:space:]]*))?)*[[:space:]]+"
 end_re='([^[:alnum:]_-]|$)'
 
 if ! printf '%s' "$command" | grep -Eq "${git_re}(commit|push)${end_re}"; then
   exit 0
 fi
 
-# A push whose refspec targets main/master (`HEAD:main`, `origin master`), or
-# that pushes every branch, lands there whatever is checked out.
-if printf '%s' "$command" | grep -Eq "${git_re}push([[:space:]][^;&|]*)?([[:space:]:+](refs/heads/)?(main|master)([[:space:]\"')]|$)|[[:space:]]--(all|mirror)${end_re})"; then
+# A push whose refspec targets main/master (`HEAD:main`, `origin master`,
+# Gerrit's `HEAD:refs/for/master`), or that pushes every branch, lands there
+# whatever is checked out.
+if printf '%s' "$command" | grep -Eq "${git_re}push([[:space:]][^;&|]*)?([[:space:]:+](refs/(heads|for)/)?(main|master)([[:space:]\"');&|]|$)|[[:space:]]--(all|mirror)${end_re})"; then
   block "targeting main/master" main
 fi
 
 # Check the branch everywhere the command may run: the hook's cwd, plus any
-# `git -C <dir>` or `cd <dir>` target.
+# `git -C <dir>`, `cd <dir>` or `pushd <dir>` target, quoted or not.
 dirs=("$cwd")
 while IFS= read -r d; do
   d=${d//\"/}
@@ -65,7 +67,7 @@ while IFS= read -r d; do
     *) d="$cwd/$d" ;;
   esac
   dirs+=("$d")
-done < <(printf '%s' "$command" | grep -oE '(^|[^[:alnum:]_-])(-C|cd)[[:space:]]+[^[:space:];&|)`]+' | sed -E 's/^.*(-C|cd)[[:space:]]+//')
+done < <(printf '%s' "$command" | grep -oE "(^|[^[:alnum:]_-])(-C|cd|pushd)[[:space:]]+(\"[^\"]*\"|'[^']*'|[^[:space:];&|)\`]+)" | sed -E 's/^[^[:alnum:]_-]?(-C|cd|pushd)[[:space:]]+//')
 
 for d in "${dirs[@]}"; do
   branch=$(git -C "$d" branch --show-current 2>/dev/null)

@@ -9,9 +9,10 @@ set -uo pipefail
 REPO="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$REPO" || exit 1
 
-# Skills referenced here but not shipped: they come from the upstream
-# mattpocock-skills plugin and resolve only when it is installed alongside.
-EXTERNAL_SKILLS="codebase-design writing-for-agents"
+# Skills referenced here but not shipped, which resolve only when the plugin
+# that ships them is installed alongside. Keep it empty: inline what a skill
+# needs instead of depending on another plugin.
+EXTERNAL_SKILLS=""
 # Slash names that are Claude Code built-in commands, not skills.
 BUILTIN_COMMANDS="plugin"
 
@@ -90,6 +91,11 @@ while IFS=: read -r file line ref; do
   contains "$skills $EXTERNAL_SKILLS $BUILTIN_COMMANDS" "$ref" || fail "$file:$line: /$ref is not a skill in skills/ or a known external skill"
 done < <(printf '%s\n' "$docs" | xargs grep -noHE '`/[a-z][a-z0-9-]*`')
 
+# Tracked symlinks resolve (AGENTS.md -> .claude/CLAUDE.md).
+while IFS= read -r link; do
+  [ -e "$link" ] || fail "$link is a symlink to $(readlink "$link"), which doesn't exist"
+done < <(git ls-files -s | awk -F '\t' '$1 ~ /^120000 / { print $2 }')
+
 # No em-dashes anywhere (.claude/CLAUDE.md). Built from bytes so this file
 # doesn't contain one.
 emdash=$(printf '\342\200\224')
@@ -97,11 +103,13 @@ while IFS= read -r hit; do
   fail "em-dash: $hit"
 done < <(git grep -nI -e "$emdash")
 
-# Commit guard tests.
-if ! out=$(bash scripts/test-block-commit-on-main.sh 2>&1); then
-  fail "commit guard tests:"
-  printf '%s\n' "$out"
-fi
+# Script tests.
+for test in scripts/test-*.sh; do
+  if ! out=$(bash "$test" 2>&1); then
+    fail "$test:"
+    printf '%s\n' "$out"
+  fi
+done
 
 # Shell scripts.
 if command -v shellcheck >/dev/null 2>&1; then

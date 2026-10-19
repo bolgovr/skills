@@ -58,7 +58,13 @@ A **seam** is the public boundary tests go at: the interface where you observe b
 
 Ask: "What's the public interface, and which seams should we test?"
 
-When the shape of that interface is itself in question (how deep the module is, where the seam belongs, what the interface should expose), call the Skill tool with "codebase-design" for the vocabulary. It is the shared source of the module, interface, depth, seam, adapter, leverage and locality terms, and it is a reference to consult, not a session to run.
+When the shape of that interface is itself in question (how deep the module is, where the seam belongs, what the interface should expose), argue it in these terms:
+
+- **Module**: anything with an interface and an implementation, at any scale: a function, a class, a package.
+- **Interface**: everything a caller must know to use the module correctly: types, but also invariants, ordering, error modes, and required configuration.
+- **Depth**: how much behaviour a caller or test can exercise per unit of interface it has to learn. Prefer deep modules (a lot behind a small interface) over shallow ones (an interface nearly as complex as the implementation).
+- **Adapter**: a concrete thing that fills an interface at a seam, such as the real database repo or an in-memory fake.
+- **Leverage** is what callers get from depth, and **locality** is what maintainers get: change and bugs concentrate in one place instead of spreading across callers.
 
 A seam commonly falls at a layer boundary (see architecture-principles): Controller → Use Case, Use Case → Use Case Output, Use Case → Entity.
 

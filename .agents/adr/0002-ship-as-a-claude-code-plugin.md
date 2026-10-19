@@ -46,6 +46,6 @@ In this fork `skills/` is flat, with no buckets, so every skill ships. A `skills
 
 This record was inherited from upstream, and several other parts don't describe this fork either:
 
-- There is no `package.json`. The second invariant above becomes: bump `.claude-plugin/plugin.json`'s `version` on its own whenever what the plugin ships changes.
+- There is no `package.json`. The second invariant above becomes: bump `.claude-plugin/plugin.json`'s `version` when you cut a release for plugin users, not on every change. The author installs through `scripts/link-skills.sh` symlinks, which ignore `version`, and no plugin installs are known, so a per-change bump was busywork that got skipped (decided 2026-10-19, after the smartass audit).
 - The 2026-08-05 update describes upstream's `mattpocock-skills` listing in the official marketplace, not this fork.
 - The Codex deferral rested on bucket folders that no longer exist. A native Codex plugin was considered again and declined: `scripts/link-skills.sh` already links every skill into `~/.agents/skills`.

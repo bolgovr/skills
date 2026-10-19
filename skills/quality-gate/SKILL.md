@@ -29,10 +29,9 @@ Read the matched template(s) and run every check they list, in order, against th
 
 ## 4. Check architecture and SOLID
 
-Call the Skill tool with "architecture-principles" for the clean architecture and SOLID reference, then check the scoped change against it:
+Call the Skill tool with "architecture-principles" for the clean architecture and SOLID reference, then check the scoped change against it, grading by its rule: A Dependency Rule violation (an inner layer naming an outer-layer type, such as a Use Case or Entity importing a framework, UI, or database type) is a hard violation; a SOLID finding is a judgement call.
 
-- **Dependency Rule violations** (an inner layer naming something from an outer layer, e.g. a Use Case or Entity importing a framework, UI, or database type) are hard failures, same as any other check in this gate.
-- **SOLID findings** (a class doing more than one thing, a switch that should be polymorphism, a concrete dependency instead of an interface) are judgement calls: report them, but they don't block the gate on their own.
+Here a hard violation fails the gate like any other check, and a judgement call is reported but doesn't block the gate on its own.
 
 ## 5. Verdict
 

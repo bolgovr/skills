@@ -11,3 +11,7 @@ Use it to:
 - Decide which layer new logic belongs in and keep dependencies pointing inward per the Dependency Rule.
 - Check a class or interface against SOLID before moving on to the next piece of work.
 - Judge whether an existing change respects layer boundaries and SOLID, as part of a review or quality gate.
+
+## Grading
+
+A Dependency Rule violation (an inner layer naming an outer-layer type, such as a Use Case or Entity importing a framework, UI, or database type) is a hard violation; a SOLID finding is a judgement call. Callers (`code-review`, `quality-gate`) restate this sentence word for word, because their sub-agents may never load this skill; change it here and there together.
