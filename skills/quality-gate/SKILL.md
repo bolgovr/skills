@@ -6,7 +6,7 @@ description: Run the language-appropriate quality gate (build, lint, typecheck, 
 # Quality Gate
 
 Gate a change on language-specific checks before it's done. Scope to what changed, not the whole repo, unless nothing has changed yet.
-Coverage is part of the gate: every language template has a Coverage step, and it passes only when all new and changed code is covered by tests or the report names each uncovered line with the reason it can't be. Coverage runs through those steps only: where a template skips its tests, it skips coverage too, and a language with no template gets no coverage check (see step 2).
+Coverage is part of the gate. Each language template measures it in its own Coverage step, and that step applies one rule: it passes only when all new and changed code is covered by tests, or the report names each uncovered line with the reason it can't be. Coverage is measured through those steps only: where a template skips its tests or can't measure coverage, it reports coverage as not measured, and a language with no template gets no coverage check (see step 2).
 
 ## 1. Scope the change
 
@@ -35,4 +35,4 @@ Here a hard violation fails the gate like any other check, and a judgement call 
 
 ## 5. Verdict
 
-The gate passes only when every check in every matched template passed and no Dependency Rule violation was found. On any failure: don't call the work done. Show the failing command's output or the violation, fix it (or ask, if the fix isn't yours to make), and re-run that check. List any SOLID judgement calls separately; they're for the user to weigh, not a blocker.
+The gate passes only when every check in every matched template passed and no Dependency Rule violation was found. A step a template skips (no config, no test script, coverage not measured) isn't a failure; name it in the verdict. On any failure: don't call the work done. Show the failing command's output or the violation, fix it (or ask, if the fix isn't yours to make), and re-run that check. List any SOLID judgement calls separately; they're for the user to weigh, not a blocker.
