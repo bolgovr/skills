@@ -123,10 +123,12 @@ fi
 
 # Plugin manifests.
 if command -v claude >/dev/null 2>&1; then
-  if ! out=$(claude plugin validate . --strict 2>&1); then
-    fail "claude plugin validate . --strict:"
-    printf '%s\n' "$out"
-  fi
+  for target in . .claude-plugin/plugin.json; do
+    if ! out=$(claude plugin validate "$target" --strict 2>&1); then
+      fail "claude plugin validate $target --strict:"
+      printf '%s\n' "$out"
+    fi
+  done
 else
   warn "claude CLI not installed, skipping plugin validation"
 fi
