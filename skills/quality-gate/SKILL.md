@@ -6,7 +6,7 @@ description: Run the language-appropriate quality gate (build, lint, typecheck, 
 # Quality Gate
 
 Gate a change on language-specific checks before it's done. Scope to what changed, not the whole repo, unless nothing has changed yet.
-always run test coverage check and make sure all new code is covered by tests. If the repo has a language-specific quality gate template, run it too.
+Coverage is part of the gate: every language template has a Coverage step, and it passes only when all new and changed code is covered by tests or the report names each uncovered line with the reason it can't be. Coverage runs through those steps only: where a template skips its tests, it skips coverage too, and a language with no template gets no coverage check (see step 2).
 
 ## 1. Scope the change
 
