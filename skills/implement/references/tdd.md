@@ -28,7 +28,7 @@ Red flags:
 - Verifying through external means instead of interface
 
 ## Mocking
-Mock at the Frameworks and Drivers boundary (see architecture-principles): the concrete "detail" behind an interface a Use Case or Entity owns, never the business rule itself.
+Mock at the Frameworks and Drivers boundary: the concrete "detail" behind an interface a Use Case or Entity owns, never the business rule itself.
 - External APIs (payment, email, etc.)
 - Databases
 - Time/randomness
@@ -42,7 +42,7 @@ A **seam** is the public boundary you test at: the interface where you observe b
 
 **Test only at the seam named in your brief.** It was confirmed with the user. If the work shows the seam is wrong, or a test needs a seam that wasn't agreed, stop and report `needs-decision`; don't invent a new one.
 
-A seam commonly falls at a layer boundary (see architecture-principles): Controller → Use Case, Use Case → Use Case Output, Use Case → Entity. See Mocking above for what to fake at those boundaries.
+A seam commonly falls at a layer boundary: Controller → Use Case, Use Case → Use Case Output, Use Case → Entity. See Mocking above for what to fake at those boundaries.
 
 ## Anti-patterns
 
