@@ -52,7 +52,7 @@ After dispatching a sub-agent, end your turn; its completion notification re-inv
 
 ## Seams
 
-A **seam** is the public boundary tests go at: the interface where you observe behavior without reaching inside. Tests live at seams, never against internals.
+Before confirming seams with the user, read the "Seams: where tests go" section of `<skill dir>/references/tdd.md` (`<skill dir>` is the base directory the harness gave when this skill was invoked), which defines what a **seam** is and where one commonly falls.
 
 **Test only at pre-agreed seams.** Before any seam agent starts, write down the seams under test and confirm them with the user. You can't test everything, so agreeing the seams up front is how testing effort lands on the critical paths and complex logic instead of every edge case.
 
@@ -65,8 +65,6 @@ When the shape of that interface is itself in question (how deep the module is, 
 - **Depth**: how much behaviour a caller or test can exercise per unit of interface it has to learn. Prefer deep modules (a lot behind a small interface) over shallow ones (an interface nearly as complex as the implementation).
 - **Adapter**: a concrete thing that fills an interface at a seam, such as the real database repo or an in-memory fake.
 - **Leverage** is what callers get from depth, and **locality** is what maintainers get: change and bugs concentrate in one place instead of spreading across callers.
-
-A seam commonly falls at a layer boundary (see architecture-principles): Controller → Use Case, Use Case → Use Case Output, Use Case → Entity.
 
 ## Sub-agent brief
 
@@ -97,7 +95,7 @@ notes: <questions, surprises, decisions made>
 Role lines (`<skill dir>` is the base directory the harness gave when this skill was invoked):
 
 - **explore**: Read `CONTEXT.md` and the ADRs in the area, find the code the spec touches, and propose candidate seams (the public interface, what sits behind it, where its tests go). Change nothing and don't commit. Instead of the standard report, reply with the relevant files and the candidate seams, one line each, at most 25 lines.
-- **seam**: Implement seam `<name>` from the plan, test-first. Read `<skill dir>/references/tdd.md` before writing anything and follow it on every cycle.
+- **seam**: Implement seam `<name>` from the plan, test-first. Before writing anything, call the Skill tool with "architecture-principles" and read `<skill dir>/references/tdd.md`; follow it on every cycle.
 - **observable**: Call the Skill tool with "observable" and apply it to this branch's changes since `origin/<default>`.
 - **gate**: Run the full test suite and call the Skill tool with "quality-gate". Fix what fails and rerun, at most 3 rounds; if it's still red, report `blocked` with the remaining failures in one line each.
 - **review-fix**: Apply these review findings: `<findings>`. Then run the full test suite and the quality gate as the gate role does, before you commit.
@@ -105,4 +103,4 @@ Role lines (`<skill dir>` is the base directory the harness gave when this skill
 
 ## Without a sub-agent tool
 
-Where there is no tool for dispatching sub-agents, run the same flow inline, in the same order, with the same plan file. Treat each role line as your checklist for that step, and read `references/tdd.md` before the first seam.
+Where there is no tool for dispatching sub-agents, run the same flow inline, in the same order, with the same plan file. Treat each role line as your checklist for that step, and before the first seam, call the Skill tool with "architecture-principles" and read `<skill dir>/references/tdd.md`.
