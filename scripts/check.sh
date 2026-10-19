@@ -2,7 +2,7 @@
 set -uo pipefail
 
 # Repo checks: the rules from .claude/CLAUDE.md and .agents/invocation.md that
-# a script can enforce, plus the commit-guard tests, shellcheck, and strict
+# a script can enforce, plus the script tests, shellcheck, and strict
 # plugin validation. Runs as the pre-commit hook (.githooks/pre-commit).
 # Checks the working tree, not only what is staged.
 
