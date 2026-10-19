@@ -2,7 +2,7 @@
 set -uo pipefail
 
 # Repo checks: the rules from .claude/CLAUDE.md and .agents/invocation.md that
-# a script can enforce, plus the commit-guard tests, shellcheck, and strict
+# a script can enforce, plus the script tests, shellcheck, and strict
 # plugin validation. Runs as the pre-commit hook (.githooks/pre-commit).
 # Checks the working tree, not only what is staged.
 
@@ -123,10 +123,12 @@ fi
 
 # Plugin manifests.
 if command -v claude >/dev/null 2>&1; then
-  if ! out=$(claude plugin validate . --strict 2>&1); then
-    fail "claude plugin validate . --strict:"
-    printf '%s\n' "$out"
-  fi
+  for target in . .claude-plugin/plugin.json; do
+    if ! out=$(claude plugin validate "$target" --strict 2>&1); then
+      fail "claude plugin validate $target --strict:"
+      printf '%s\n' "$out"
+    fi
+  done
 else
   warn "claude CLI not installed, skipping plugin validation"
 fi

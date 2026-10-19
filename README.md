@@ -45,3 +45,15 @@ Reachable by the model or the user.
 - [`grilling`](./skills/grilling/SKILL.md): grill the user relentlessly about a plan, decision, or idea, stress-testing their thinking round by round.
 - [`observable`](./skills/observable/SKILL.md): structured logging discipline for any language, so features that run in production leave evidence they work.
 - [`quality-gate`](./skills/quality-gate/SKILL.md): run the language-appropriate quality gate (build, lint, typecheck, tests) before implementation work is considered done, and check the change against clean architecture and SOLID.
+
+## Develop
+
+You need bash, git, and jq or python3 (the commit-guard tests parse JSON with one of them). shellcheck and the `claude` CLI are optional: without them, the checks warn and skip shellcheck and plugin validation.
+
+Enable the pre-commit hook once per clone:
+
+```bash
+git config core.hooksPath .githooks
+```
+
+The hook runs `scripts/check.sh`, which you can also run by hand before committing. To try your local copy of the skills, run `scripts/link-skills.sh` to symlink them into `~/.claude/skills` and `~/.agents/skills`.

@@ -1,6 +1,7 @@
 ---
 name: smartass
 description: "Staff-engineer audit that ignores the status quo and proposes evidence-backed overhauls for a repo, up to framework swaps or rewrites."
+compatibility: "Requires git."
 disable-model-invocation: true
 argument-hint: "[path | topic | process]"
 ---

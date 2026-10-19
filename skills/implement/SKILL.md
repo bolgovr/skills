@@ -1,6 +1,7 @@
 ---
 name: implement
 description: "Implement a piece of work based on a spec or set of tickets, using clean architecture and SOLID principles."
+compatibility: "Requires git, jq or python3 for the commit guard hook, and gh or glab for the issue tracker."
 disable-model-invocation: true
 hooks:
   PreToolUse:

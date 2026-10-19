@@ -1,6 +1,7 @@
 ---
 name: setup-repo-skills
 description: "Configure this repo for the engineering skills: set up its issue tracker and domain doc layout. Run once before first use of the other engineering skills."
+compatibility: "Requires git, plus gh or glab depending on the chosen issue tracker."
 disable-model-invocation: true
 ---
 
