@@ -11,9 +11,25 @@ set -euo pipefail
 #   - ~/.agents/skills: Codex and other Agent Skills-compatible harnesses
 # Each entry is a symlink into this repo, so a `git pull` is all that's needed
 # to keep installed skills up to date.
+#
+# It only replaces entries that are already symlinks into this repo. A real
+# directory, or a symlink into another repo (an upstream skill of the same
+# name), is skipped with a warning unless you pass --force.
+# Tested by scripts/test-link-skills.sh.
 
 REPO="$(cd "$(dirname "$0")/.." && pwd)"
 DESTS=("$HOME/.claude/skills" "$HOME/.agents/skills")
+
+force=no
+case "${1:-}" in
+  "") ;;
+  --force) force=yes ;;
+  *)
+    echo "usage: $0 [--force]" >&2
+    exit 1
+    ;;
+esac
+skipped=0
 
 # Collect the repo's skills once, link into every destination.
 names=()
@@ -46,7 +62,24 @@ for DEST in "${DESTS[@]}"; do
     src="${srcs[$i]}"
     target="$DEST/$name"
 
-    if [ -e "$target" ] && [ ! -L "$target" ]; then
+    if [ -L "$target" ]; then
+      current="$(readlink "$target")"
+      case "$current" in
+        "$REPO"/*) ;;
+        *)
+          if [ "$force" = no ]; then
+            echo "skipped $target: it links to $current, not into this repo" >&2
+            skipped=$((skipped + 1))
+            continue
+          fi
+          ;;
+      esac
+    elif [ -e "$target" ]; then
+      if [ "$force" = no ]; then
+        echo "skipped $target: it is not a symlink" >&2
+        skipped=$((skipped + 1))
+        continue
+      fi
       rm -rf "$target"
     fi
 
@@ -54,3 +87,8 @@ for DEST in "${DESTS[@]}"; do
     echo "linked $name -> $src ($DEST)"
   done
 done
+
+if [ "$skipped" -gt 0 ]; then
+  echo "$skipped skill(s) skipped. Move them aside, or re-run with --force to replace them." >&2
+  exit 1
+fi

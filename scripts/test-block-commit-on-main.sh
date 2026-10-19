@@ -19,8 +19,10 @@ trap 'rm -rf "$tmp"' EXIT
 
 git init -q -b main "$tmp/on-main"
 git init -q -b feat/x "$tmp/on-feat"
+git init -q -b main "$tmp/main with spaces"
 MAIN="$tmp/on-main"
 FEAT="$tmp/on-feat"
+SPACED="$tmp/main with spaces"
 
 # A PATH with the tools the hook needs but no JSON parser.
 mkdir "$tmp/bin"
@@ -53,6 +55,8 @@ run 0 "$MAIN" 'gitk --all'
 run 0 "$FEAT" 'git commit -m x'
 run 0 "$FEAT" 'git push -u origin feat/x'
 run 0 "$FEAT" 'git push origin feat/main-thing'
+run 0 "$FEAT" 'git push origin feat/x;echo ok'
+run 0 "$FEAT" "cd \"$FEAT\" && git commit -m x"
 run 0 "$MAIN" 'not json, no git here' 'not json, no git here'
 
 # Blocked on a main checkout, however the command is spelled.
@@ -72,10 +76,18 @@ run 2 "$MAIN" $'git add .\ngit commit -m x'
 run 2 "$FEAT" 'git push origin HEAD:main'
 run 2 "$FEAT" 'git push origin feat/x:refs/heads/master'
 run 2 "$FEAT" 'git push origin master'
+run 2 "$FEAT" 'git push origin HEAD:main;echo ok'
+run 2 "$FEAT" 'git push origin HEAD:master&&echo ok'
+run 2 "$FEAT" 'git push origin HEAD:main|cat'
+run 2 "$FEAT" 'git push origin HEAD:refs/for/master'
 run 2 "$FEAT" 'git push --all origin'
 run 2 "$FEAT" "git -C $MAIN commit -m x"
 run 2 "$FEAT" "cd $MAIN && git commit -m x"
 run 2 "$FEAT" 'cd ../on-main && git commit -m x'
+run 2 "$FEAT" "pushd $MAIN && git commit -m x"
+run 2 "$FEAT" "cd \"$SPACED\" && git commit -m x"
+run 2 "$FEAT" "cd '$SPACED' && git commit -m x"
+run 2 "$FEAT" "git -C \"$SPACED\" commit -m x"
 
 # Fails closed when the payload can't be parsed.
 run 2 "$MAIN" 'git commit -m x' 'garbage git commit -m x'

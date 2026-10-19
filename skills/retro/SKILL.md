@@ -8,11 +8,9 @@ The user has asked for a **retrospective**. You are suggesting improvements to t
 
 ## Steps
 
-1. Call the Skill tool with `writing-for-agents` for the writing style guide.
+1. Read the primary sources for the session the user specifies. This may mean searching through session logs on this machine. If the user doesn't specify a session, default to the current one.
 
-2. Read the primary sources for the session the user specifies. This may mean searching through session logs on this machine. If the user doesn't specify a session, default to the current one.
-
-3. Look for candidates for improvement in these categories.
+2. Look for candidates for improvement in these categories.
 
 - **Navigation**: how easy was it for the agent to find the right files? Are there hidden dependencies between files? Would a **navigation pointer** make it easier? _Use when_ the session took a long time to find a piece of information.
 - **Automated checks**: are there automated checks that could catch errors the agent made? Linting, typing, tests, filesystem linters? Read the repo's own check command first (its `package.json`/build-tool `lint`/`check` scripts, its CI workflow), so a check that already exists but sits unwired or silently broken is the finding, not a reinvention. A repo with no **guardrail** (no pre-commit hook and no CI job running its lint/typecheck/test command) is itself a finding: an un-linted repo is a standing missed opportunity, not a neutral default. _Use when_ the agent made a mistake an automated check could have caught, or the repo has no guardrail at all.
@@ -23,7 +21,7 @@ The user has asked for a **retrospective**. You are suggesting improvements to t
 - **No-ops**: look for instructions in steering files that don't modify the agent's behavior. _Use when_ the steering files are large and unwieldy.
 - **Information access**: look for opportunities to increase the agent's access to information. Teeing dev server logs, readonly access to third-party services. _Use when_ a crucial piece of information was not available to the agent.
 
-4. Present these candidates to the user, in order of severity.
+3. Present these candidates to the user, in order of severity. Word every proposed change to a document an agent reads by the rules under "Writing for agents".
 
 ## Reference
 
@@ -42,4 +40,14 @@ You have access to several files in the repo:
 - `CLAUDE.md`/`AGENTS.md`: these files are pushed to the context window of any agent working in this repo. They should be used incredibly sparingly, usually only for **navigation pointers** to other files.
 - `CODING_STANDARDS.md`: this file is read during review, not implementation. Add **navigation pointers** to docs folders if the standards file gets more than 1,000 lines long.
 - Docs: use docs as references files, pointed to by other files. Look for existing docs before writing new ones.
-- Skills: use skills for docs (since their description goes into the agent's context window), or for user-invoked commands. Follow the advice in the `writing-for-agents` skill.
+- Skills: use skills for docs (since their description goes into the agent's context window), or for user-invoked commands. Follow "Writing for agents" below.
+
+### Writing for agents
+
+- **Pointers**: a skill description or an `AGENTS.md` line naming a doc is a pointer, and its wording decides when the agent reaches the material. Say what the material is, then name each distinct case that should trigger it, once. Sharpen a weak pointer before inlining its target.
+- **The ladder**: inline what every run needs, and push what only some runs need into a separate file behind a pointer. A document too long to attend to is a finding even when every line is live.
+- **Completion criteria**: end every step on a condition the agent can check, demanding enough to force the legwork ("every modified model accounted for", not "produce a change list").
+- **Leading words**: replace a triad spelled out at several sites with one pretrained word (_tight_, _red_) and repeat that word.
+- **Positive targets**: state the behaviour you want. A prohibition primes the thing it forbids, so keep one only as a guardrail, paired with its positive target.
+- **Single source of truth**: one meaning lives in one place. Leave what one command or file read can find (scripts, config, `--help`) to the environment, and cache only what looking can't find.
+- **No-ops**: delete any sentence that doesn't change behaviour versus the model's default, whole, rather than trimming its words.
