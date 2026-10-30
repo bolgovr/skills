@@ -48,7 +48,12 @@ After dispatching a sub-agent, end your turn; its completion notification re-inv
 6. **Review.** Call the Skill tool with "code-review" yourself, with `origin/<default>` as the fixed point. It runs its own sub-agents.
 7. **Fix review findings.** If the review found anything, dispatch one `general-purpose` review-fix agent with all the findings. It escalates the same way seam agents do and reruns the gate before it commits.
 8. **Sync with the default branch.** Run `git fetch` and `git log --oneline HEAD..origin/<default>`. If it lists anything, others have landed work since you branched: dispatch a `general-purpose` sync agent to rebase onto it and rerun the gate. If it lists nothing, move on.
-9. **Ship.** Check `git status` is clean and skim `git log --oneline origin/<default>..HEAD`. Then push the feature branch and open a Pull Request against the default branch.
+9. **Full test suite.** Dispatch a `general-purpose` full-suite agent. This is the only time the full suite runs in the session (see Running tests below).
+10. **Ship.** Check `git status` is clean and skim `git log --oneline origin/<default>..HEAD`. Then push the feature branch and open a Pull Request against the default branch.
+
+## Running tests
+
+During development, every agent runs only the tests in scope: the test files for the code it touched and the tests of the seam it's working on, plus typechecking. The full test suite runs exactly once, in the full-suite step right before the PR opens. Every sub-agent follows this rule, so the brief states it; no role other than full-suite runs the full suite.
 
 ## Seams
 
@@ -83,6 +88,9 @@ Escalate, don't decide: if the work would change a confirmed seam or a public
 interface, or add a dependency, stop and report needs-decision with the question.
 Make local implementation choices yourself and add each to the plan's Decisions.
 
+Run only the tests in scope for your change (the test files for the code you
+touched) plus typechecking. Never run the full test suite unless your role says so.
+
 Commit to the current branch once your work is green, after confirming
 `git branch --show-current` is neither main nor master. Never push.
 
@@ -99,9 +107,10 @@ Role lines (`<skill dir>` is the base directory the harness gave when this skill
 - **explore**: Read `CONTEXT.md` and the ADRs in the area, find the code the spec touches, and propose candidate seams (the public interface, what sits behind it, where its tests go). Change nothing and don't commit. Instead of the standard report, reply with the relevant files and the candidate seams, one line each, at most 25 lines.
 - **seam**: Implement seam `<name>` from the plan, test-first. Read `<skill dir>/references/tdd.md` before writing anything and follow it on every cycle.
 - **observable**: Call the Skill tool with "observable" and apply it to this branch's changes since `origin/<default>`.
-- **gate**: Run the full test suite and call the Skill tool with "quality-gate". Fix what fails and rerun, at most 3 rounds; if it's still red, report `blocked` with the remaining failures in one line each.
-- **review-fix**: Apply these review findings: `<findings>`. Then run the full test suite and the quality gate as the gate role does, before you commit.
-- **sync**: Rebase this branch onto `origin/<default>`. Resolve conflicts so both sides' intent survives; a conflict that needs a design call is a `needs-decision`, so run `git rebase --abort` and report it. Once rebased, run the full test suite and the quality gate as the gate role does, and commit any fixes.
+- **gate**: Call the Skill tool with "quality-gate", scoped to this branch's changes since `origin/<default>`. Fix what fails and rerun, at most 3 rounds; if it's still red, report `blocked` with the remaining failures in one line each.
+- **review-fix**: Apply these review findings: `<findings>`. Then run the tests in scope for the fixes and the quality gate as the gate role does, before you commit.
+- **sync**: Rebase this branch onto `origin/<default>`. Resolve conflicts so both sides' intent survives; a conflict that needs a design call is a `needs-decision`, so run `git rebase --abort` and report it. Once rebased, run the tests in scope for the files that conflicted or changed upstream and the quality gate as the gate role does, and commit any fixes.
+- **full-suite**: Run the full test suite once. If anything fails, fix it and rerun only the failing tests and the tests in scope for your fix, not the whole suite, at most 3 rounds; if it's still red, report `blocked` with the remaining failures in one line each.
 
 ## Without a sub-agent tool
 
