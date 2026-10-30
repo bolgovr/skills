@@ -56,6 +56,6 @@ A seam commonly falls at a layer boundary: Controller → Use Case, Use Case →
 - **One slice at a time.** One test, one minimal implementation per cycle.
 - **Refactoring is not part of the loop.** It belongs to the review stage (see the `code-review` skill), not the implementation cycle.
 
-Run typechecking and the single test files you touch regularly. The full test suite and the quality gate run later in their own stage, so don't run them here.
+Run typechecking and only the test files in scope (the ones you touch) regularly. The quality gate runs later in its own stage, and the full test suite runs exactly once, right before the PR opens, so don't run either here.
 
 Don't end your turn to wait on a background command: as a sub-agent, ending your turn is returning your report. Run long commands (a build, a large test file) in the foreground with a timeout that fits, and keep only the lines you need from their output.
