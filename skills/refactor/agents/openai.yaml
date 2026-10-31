@@ -1,0 +1,5 @@
+interface:
+  display_name: "Refactor"
+  short_description: "Plan a refactor from a root, for implement"
+policy:
+  allow_implicit_invocation: false
