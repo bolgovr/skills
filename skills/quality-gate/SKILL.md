@@ -6,7 +6,8 @@ description: Run the language-appropriate quality gate (build, lint, typecheck, 
 # Quality Gate
 
 Gate a change on language-specific checks before it's done. Scope to what changed, not the whole repo, unless nothing has changed yet.
-Coverage is part of the gate. Each language template measures it in its own Coverage step, and that step applies one rule: it passes only when all new and changed code is covered by tests, or the report names each uncovered line with the reason it can't be. Coverage is measured through those steps only: where a template skips its tests or can't measure coverage, it reports coverage as not measured, and a language with no template gets no coverage check (see step 2).
+Coverage is part of the gate, at line level: every new or changed line is covered by at least one test, and unit and integration tests both count. There is no percentage target. An uncovered line passes only with an exclusion written in the code, with a reason, so it shows in the diff and in review; each template's Coverage step names its exclusion syntax. Go and Swift have no native pragma, so the gate defines one: `// coverage-exclude: <reason>`, at the end of the uncovered line or alone on the line above it. The tool still reports that line; the gate honours the comment when reading the report. An exclusion with no reason doesn't count, in any language. Code left untested because a platform call has no fake doesn't qualify: that's a missing fake adapter, not a reason to exclude.
+Test files are never subject to coverage, and files with no executable lines (docs, config) need none. For a matched language, coverage not measured fails the gate: no coverage provider, an unknown test runner, or no test script, and the gate names what's missing (for example the exact command to install the provider). It never installs anything itself. Coverage is measured through the templates' Coverage steps only. A changed production file in a language with no template can't be measured, so it doesn't block: the verdict reports it as `coverage: no template for <language>`.
 
 ## 1. Scope the change
 
@@ -21,7 +22,7 @@ For each language below, match if either its marker file exists at the repo root
 - **Swift**: `Package.swift`, `*.xcodeproj`, `*.xcworkspace`, `*.swift` → [swift-template.md](./swift-template.md)
 - **TypeScript**: `tsconfig.json`, `*.ts`, `*.tsx` → [typescript-template.md](./typescript-template.md)
 
-A change can match more than one template (e.g. a Go backend with a TypeScript frontend); run every template that matches. If nothing matches, say so, skip step 3 (don't improvise checks for a language with no template), and go straight to step 4: the architecture and SOLID check is language-agnostic and still applies.
+A change can match more than one template (e.g. a Go backend with a TypeScript frontend); run every template that matches. If nothing matches, say so, skip step 3 (don't improvise checks for a language with no template), and go straight to step 4: the architecture and SOLID check is language-agnostic and still applies. A changed production file no template matches follows the no-template rule above.
 
 ## 3. Run each matched template
 
@@ -33,6 +34,22 @@ Call the Skill tool with "architecture-principles" for the clean architecture an
 
 Here a hard violation fails the gate like any other check, and a judgement call is reported but doesn't block the gate on its own.
 
-## 5. Verdict
+## 5. Adversary
 
-The gate passes only when every check in every matched template passed and no Dependency Rule violation was found. A step a template skips (no config, no test script, coverage not measured) isn't a failure; name it in the verdict. On any failure: don't call the work done. Show the failing command's output or the violation, fix it (or ask, if the fix isn't yours to make), and re-run that check. List any SOLID judgement calls separately; they're for the user to weigh, not a blocker.
+Run this step last, only once every other check (build, lint, tests, coverage, Dependency Rule) is green. Dispatch a fresh sub-agent that calls the Skill tool with "adversary". Its brief names the spec source if your caller gave one, the scoped change, and that counterexample tests stay uncommitted in the working tree (a standalone gate usually runs on uncommitted work); keep your own reasoning about the change out of it. If it reports counterexamples, fix the production code (never the counterexample tests), rerun the checks the fix touches, then dispatch the adversary once more to confirm. Stop after at most 3 rounds and report the remaining counterexamples as failures. Pass each `needs-decision` it reports to the user, per the adversary skill's Disputes rule.
+
+If the harness has a sub-agent tool but you can't use it (you are a sub-agent yourself), skip this step and report `adversary: not run (caller dispatches it)`; that isn't a failure. In a harness with no sub-agent tool at all, call the Skill tool with "adversary" and run it inline, and flag its verdict line **not independent**.
+
+## 6. Verdict
+
+The gate passes only when every check in every matched template passed, no Dependency Rule violation was found, and the adversary's last run left no counterexample (or it was not run, as step 5 allows). A disputed counterexample blocks (the adversary skill's Disputes rule). A step a template skips for lack of config (no lint or format config) isn't a failure; name it in the verdict. Coverage is never skipped for a matched language (not measured fails, as above), and each no-template line is listed without blocking. On any failure: don't call the work done. Show the failing command's output or the violation, fix it (or ask, if the fix isn't yours to make), and re-run that check. List any SOLID judgement calls separately; they're for the user to weigh, not a blocker.
+
+## Coverage-only mode
+
+When the caller asks for coverage only (an implement seam agent does, before reporting `done`), run a narrower gate on the files the caller names:
+
+1. Scope to those files instead of the diff. Their new or changed lines are those changed since the branch's merge-base with its default branch (the base step 1 uses); a file new on the branch is wholly changed.
+2. Match templates as in step 2.
+3. From each matched template run only its Tests and Coverage steps, scoped to those files: pass only the tests for them as targets where the runner takes targets, and skip any full-suite run the Tests step adds.
+
+Skip the other template steps, step 4, and the adversary (step 5). The verdict passes only when the coverage rule above holds for every named production file in a matched language (a no-template file is reported, not failed, per the rule above); otherwise list each uncovered line by file and line number. This mode is the single source of truth for coverage commands: callers run it rather than a coverage command of their own.

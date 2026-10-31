@@ -12,6 +12,14 @@ _Avoid_: backlog manager, backlog backend, issue host
 A single tracked unit of work inside an **Issue tracker**: a bug, task, spec, or slice produced by `to-tickets`.
 _Avoid_: ticket (use only when quoting external systems that call them tickets)
 
+**Adversary**:
+The independent agent that tries to break a change against its spec, seeing only the spec, the diff, and the existing tests.
+_Avoid_: reviewer, tester
+
+**Counterexample**:
+A failing test, with concrete inputs, the expected result taken from the spec, and the actual result from the code, proving the code breaks its spec.
+_Avoid_: finding, bug report
+
 **Refactoring root**:
 The symbol a refactor starts from, named by the user: a function, class, module, file, or endpoint. Unlike implement's user-facing entry point, it can sit at any layer.
 _Avoid_: entry point (reserved for user-facing entry points such as an HTTP endpoint or CLI command)
@@ -31,6 +39,7 @@ The spec a refactor session produces, published as an **Issue** and consumed by 
 ## Relationships
 
 - An **Issue tracker** holds many **Issues**
+- An **Adversary** proves each break of a change with a **Counterexample**; a suspicion it can't prove is not a **Counterexample**
 - A **Refactoring plan** starts from exactly one **Refactoring root** and covers its **Reachable set**
 - A **Refactoring plan** is one **Issue**
 

@@ -7,4 +7,4 @@ Run in order. Each check must exit 0 (or produce no output, where noted) to pass
 3. **Format**: `gofmt -l .` passes only if it prints nothing. Files it lists are unformatted; fix with `gofmt -w <files>` and re-run.
 4. **Lint**: only if `.golangci.yml` or `.golangci.yaml` exists, `golangci-lint run`. No config, no lint step.
 5. **Tests**: `go test -coverprofile=coverage.out ./...`
-6. **Coverage**: read `coverage.out` from step 5: for each changed non-test `.go` file, list its uncovered blocks (records ending in a count of `0`). Every new or changed line is covered, or the report names it with the reason it can't be: a platform call with no fake, or an accepted gap the repo documents. Delete `coverage.out` afterwards.
+6. **Coverage**: read `coverage.out` from step 5: for each changed non-test `.go` file, list its uncovered blocks (records ending in a count of `0`). If `coverage.out` is missing, coverage is not measured and the step fails. Every new or changed line is covered, or excluded in the code with the gate's `// coverage-exclude: <reason>` (defined in SKILL.md). Delete `coverage.out` afterwards.
