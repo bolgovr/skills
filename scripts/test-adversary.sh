@@ -69,6 +69,29 @@ expect "$ADV_MD" 'needs-decision' "turn an ambiguous-spec counterexample into ne
 expect "$ADV_MD" 'spec line' "quote the spec line in a dispute"
 expect "$ADV_MD" 'weaken' "forbid weakening a counterexample test"
 
+# --- skills/quality-gate ------------------------------------------------------
+
+QG_MD="$REPO/skills/quality-gate/SKILL.md"
+
+# The adversary is the last check, right before the verdict.
+grep -E '^## [0-9]+\. ' "$QG_MD" | tail -n 2 | head -n 1 | grep -qi 'adversary' ||
+  fail "skills/quality-gate/SKILL.md has no Adversary step as its last step before the verdict"
+
+# Only on green, dispatched as a sub-agent through the Skill tool.
+expect "$QG_MD" 'green' "run the adversary only once every other check is green"
+expect "$QG_MD" 'Skill tool with "adversary"' "dispatch a sub-agent calling the Skill tool with \"adversary\""
+expect "$QG_MD" 'uncommitted' "leave counterexamples uncommitted"
+expect "$QG_MD" 'once more to confirm' "rerun the adversary once more to confirm the fix"
+
+# Fallbacks.
+expect "$QG_MD" "\`adversary: not run (caller dispatches it)\`" "report \`adversary: not run (caller dispatches it)\` without a sub-agent"
+expect "$QG_MD" 'not independent' "flag an inline adversary run as not independent"
+
+# Coverage-only mode skips the adversary.
+awk '/^## Coverage-only mode/ { on = 1; next } /^## / { on = 0 } on' "$QG_MD" |
+  grep -qi 'adversary' ||
+  fail "skills/quality-gate/SKILL.md coverage-only mode does not skip the adversary"
+
 # ------------------------------------------------------------------------------
 
 if [ "$failures" -gt 0 ]; then

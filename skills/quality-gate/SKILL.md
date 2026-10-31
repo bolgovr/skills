@@ -34,9 +34,15 @@ Call the Skill tool with "architecture-principles" for the clean architecture an
 
 Here a hard violation fails the gate like any other check, and a judgement call is reported but doesn't block the gate on its own.
 
-## 5. Verdict
+## 5. Adversary
 
-The gate passes only when every check in every matched template passed and no Dependency Rule violation was found. A step a template skips for lack of config (no lint or format config) isn't a failure; name it in the verdict. Coverage is never skipped for a matched language (not measured fails, as above), and each no-template line is listed without blocking. On any failure: don't call the work done. Show the failing command's output or the violation, fix it (or ask, if the fix isn't yours to make), and re-run that check. List any SOLID judgement calls separately; they're for the user to weigh, not a blocker.
+Run this step last, only once every other check (build, lint, tests, coverage, Dependency Rule) is green. Dispatch a fresh sub-agent that calls the Skill tool with "adversary". Its brief names the spec source if your caller gave one, the scoped change, and that counterexample tests stay uncommitted in the working tree (a standalone gate usually runs on uncommitted work); keep your own reasoning about the change out of it. If it reports counterexamples, fix the production code (never the counterexample tests), rerun the checks the fix touches, then dispatch the adversary once more to confirm. Pass each `needs-decision` it reports to the user.
+
+If the harness has a sub-agent tool but you can't use it (you are a sub-agent yourself), skip this step and report `adversary: not run (caller dispatches it)`; that isn't a failure. In a harness with no sub-agent tool at all, call the Skill tool with "adversary" and run it inline, and flag its verdict line **not independent**.
+
+## 6. Verdict
+
+The gate passes only when every check in every matched template passed, no Dependency Rule violation was found, and the adversary's last run left no counterexample (or it was not run, as step 5 allows). A disputed counterexample blocks until the user decides it. A step a template skips for lack of config (no lint or format config) isn't a failure; name it in the verdict. Coverage is never skipped for a matched language (not measured fails, as above), and each no-template line is listed without blocking. On any failure: don't call the work done. Show the failing command's output or the violation, fix it (or ask, if the fix isn't yours to make), and re-run that check. List any SOLID judgement calls separately; they're for the user to weigh, not a blocker.
 
 ## Coverage-only mode
 
@@ -46,4 +52,4 @@ When the caller asks for coverage only (an implement seam agent does, before rep
 2. Match templates as in step 2.
 3. From each matched template run only its Tests and Coverage steps, scoped to those files: pass only the tests for them as targets where the runner takes targets, and skip any full-suite run the Tests step adds.
 
-Skip the other template steps and step 4. The verdict passes only when the coverage rule above holds for every named production file in a matched language (a no-template file is reported, not failed, per the rule above); otherwise list each uncovered line by file and line number. This mode is the single source of truth for coverage commands: callers run it rather than a coverage command of their own.
+Skip the other template steps, step 4, and the adversary (step 5). The verdict passes only when the coverage rule above holds for every named production file in a matched language (a no-template file is reported, not failed, per the rule above); otherwise list each uncovered line by file and line number. This mode is the single source of truth for coverage commands: callers run it rather than a coverage command of their own.
