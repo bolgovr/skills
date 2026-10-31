@@ -12,9 +12,27 @@ _Avoid_: backlog manager, backlog backend, issue host
 A single tracked unit of work inside an **Issue tracker**: a bug, task, spec, or slice produced by `to-tickets`.
 _Avoid_: ticket (use only when quoting external systems that call them tickets)
 
+**Refactoring root**:
+The symbol a refactor starts from, named by the user: a function, class, module, file, or endpoint. Unlike implement's user-facing entry point, it can sit at any layer.
+_Avoid_: entry point (reserved for user-facing entry points such as an HTTP endpoint or CLI command)
+
+**Reachable set**:
+Every in-repo module reachable from a **Refactoring root** by following calls and imports, plus every test that exercises one of them. It stops at a **Boundary**.
+
+**Boundary**:
+An edge where the **Reachable set** stops: third-party or framework code, generated code, or a module already visited. Recorded, never read past.
+
+**Characterization test**:
+A test that pins the current behaviour of existing code so a refactor can prove it preserved it. It passes on first write and must stay green through the whole refactor.
+
+**Refactoring plan**:
+The spec a refactor session produces, published as an **Issue** and consumed by implement.
+
 ## Relationships
 
 - An **Issue tracker** holds many **Issues**
+- A **Refactoring plan** starts from exactly one **Refactoring root** and covers its **Reachable set**
+- A **Refactoring plan** is one **Issue**
 
 ## Flagged ambiguities
 
