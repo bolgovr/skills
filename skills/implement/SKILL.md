@@ -113,4 +113,4 @@ Role lines (`<skill dir>` is the base directory the harness gave when this skill
 
 ## Without a sub-agent tool
 
-Where there is no tool for dispatching sub-agents, run the same flow inline, in the same order, with the same plan file. Treat each role line as your checklist for that step, and before the first seam, call the Skill tool with "architecture-principles" and read `<skill dir>/references/tdd.md`. Finish each seam with its coverage-only quality gate run before starting the next.
+Where there is no tool for dispatching sub-agents, run the same flow inline, in the same order, with the same plan file. Treat each role line as your checklist for that step, and before the first seam, call the Skill tool with "architecture-principles" and read `<skill dir>/references/tdd.md`. Finish each seam by calling the Skill tool with "quality-gate" in coverage-only mode on the seam's files, as `tdd.md` describes, before starting the next.

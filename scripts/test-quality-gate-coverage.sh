@@ -25,22 +25,22 @@ coverage_step() {
        on { print }' "$GATE/$1"
 }
 
-# names <template> <syntax>: the template's Coverage step names <syntax>.
-names() {
+# expect_names <template> <syntax>: the template's Coverage step names <syntax>.
+expect_names() {
   coverage_step "$1" | grep -qF -- "$2" || fail "$1 Coverage step does not name \`$2\`"
 }
 
-names dart-template.md 'coverage:ignore-line'
-names typescript-template.md 'v8 ignore next'
-names typescript-template.md 'istanbul ignore next'
-names go-template.md 'coverage-exclude:'
-names swift-template.md 'coverage-exclude:'
+expect_names dart-template.md 'coverage:ignore-line'
+expect_names typescript-template.md 'v8 ignore next'
+expect_names typescript-template.md 'istanbul ignore next'
+expect_names go-template.md 'coverage-exclude:'
+expect_names swift-template.md 'coverage-exclude:'
 
 if grep -rqiF 'platform call with no fake' "$GATE"; then
   fail "\"a platform call with no fake\" is still offered as a reason"
 fi
 
-grep -qF 'PackageTests' "$GATE/swift-template.md" && fail "swift-template.md still names the <Package>PackageTests binary"
+grep -qF 'PackageTests.xctest/Contents/MacOS' "$GATE/swift-template.md" && fail "swift-template.md still names the <Package>PackageTests binary on macOS"
 grep -qF '.build/debug/<TestTarget>.xctest/Contents/MacOS/<TestTarget>' "$GATE/swift-template.md" ||
   fail "swift-template.md does not name the <TestTarget> binary path"
 
