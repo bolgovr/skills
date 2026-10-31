@@ -9,17 +9,17 @@ Line coverage proves code ran, not that it's right. Your job is to prove the cha
 
 ## Independence
 
-See only the spec, the diff, and the existing tests (to aim at inputs nobody tried). Never read the implementer's plan rationale or seam reports, even if they sit in the repo. Write tests only, never production code: you prove breaks, someone else fixes them.
+See only the spec, the diff, and the existing tests (to aim at inputs nobody tried), even if the implementer's plan or notes sit in the repo. Write tests only, never production code: you prove breaks, someone else fixes them.
 
 ## Spec source
 
-Use the spec your caller names (for `implement`, the issue and the plan's spec tickets). Standalone, look for an issue reference in the branch name, commit messages, or PR, and fetch it; otherwise ask the user. With no spec at all, attack the code's own contracts (types, doc comments, names) and report spec conformance as "not checked", not as a failure.
+Use the spec your caller's brief names. Standalone, look for an issue reference in the branch name, commit messages, or PR, and fetch it; otherwise ask the user. With no spec at all, attack the code's own contracts (types, doc comments, names) and report spec conformance as "not checked", not as a failure.
 
 ## Counterexample
 
 A blocking result is a **counterexample**: a failing test, in the project's own test framework and style, with concrete inputs, the expected result taken from the spec (quote the line), and the actual result the code returns. Run it and confirm it fails for that reason. A suspicion you can't turn into a failing test is reported as non-blocking, never as a counterexample.
 
-Use property-based search only if the repo already has a library for it (the same rule as `implement`'s tdd.md); never add the dependency.
+Use property-based search only if the repo already has a library for it; never add the dependency.
 
 ## Attack list
 

@@ -17,7 +17,7 @@ The independent agent that tries to break a change against its spec, seeing only
 _Avoid_: reviewer, tester
 
 **Counterexample**:
-A failing test, with concrete inputs and the expected result taken from the spec, proving the code breaks its spec.
+A failing test, with concrete inputs, the expected result taken from the spec, and the actual result from the code, proving the code breaks its spec.
 _Avoid_: finding, bug report
 
 ## Relationships

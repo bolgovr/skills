@@ -47,8 +47,8 @@ After dispatching a sub-agent, end your turn; its completion notification re-inv
 4. **Observability.** Dispatch a `general-purpose` observable agent.
 5. **Quality gate.** Dispatch a `general-purpose` gate agent.
 6. **Adversary.** Dispatch a `general-purpose` adversary agent with the Adversary brief below, not the standard one, so it sees only the spec, the diff, and the existing tests. It commits its counterexample tests, which stay in the suite as regression tests.
-   - Counterexamples: dispatch a review-fix agent with them as its findings (it fixes production code, never the counterexample tests), then dispatch the adversary once more to confirm. Stop after at most 3 rounds; if counterexamples remain, decide the next step with the user, as for `blocked`.
-   - `needs-decision` (a counterexample resting on an ambiguous spec line): put it to the user and record the answer under Decisions. The counterexample stays failing until they decide.
+   - Counterexamples: dispatch a review-fix agent with the counterexamples, then dispatch the adversary once more to confirm. Stop after at most 3 rounds; if counterexamples remain, decide the next step with the user, as for `blocked`.
+   - `needs-decision` (a dispute, per the adversary skill's Disputes rule): put it to the user and record the answer under Decisions. Don't move past this step while a dispute is open. The answer either keeps the test (review-fix fixes the code) or has the adversary rewrite it to the agreed reading.
 7. **Review.** Call the Skill tool with "code-review" yourself, with `origin/<default>` as the fixed point. It runs its own sub-agents.
 8. **Fix review findings.** If the review found anything, dispatch one `general-purpose` review-fix agent with all the findings. It escalates the same way seam agents do and reruns the gate before it commits.
 9. **Sync with the default branch.** Run `git fetch` and `git log --oneline HEAD..origin/<default>`. If it lists anything, others have landed work since you branched: dispatch a `general-purpose` sync agent to rebase onto it and rerun the gate. If it lists nothing, move on.
@@ -110,8 +110,8 @@ Role lines (`<skill dir>` is the base directory the harness gave when this skill
 - **seam**: Implement `<kind>` seam `<name>` from the plan, test-first. Before writing anything, call the Skill tool with "architecture-principles" and read `<skill dir>/references/tdd.md`; follow it on every cycle, using its section for your seam's kind. Before reporting `done`, call the Skill tool with "quality-gate" in coverage-only mode on your seam's files and close what it finds, as `tdd.md` describes.
 - **observable**: Call the Skill tool with "observable" and apply it to this branch's changes since `origin/<default>`.
 - **gate**: Call the Skill tool with "quality-gate", scoped to this branch's changes since `origin/<default>`. Its adversary step reports `adversary: not run (caller dispatches it)`, which is expected: the adversary runs as its own flow step. Fix what fails and rerun, at most 3 rounds; if it's still red, report `blocked` with the remaining failures in one line each.
-- **review-fix**: Apply these review findings: `<findings>`. Then run the tests in scope for the fixes and the quality gate as the gate role does, before you commit.
-- **sync**: Rebase this branch onto `origin/<default>`. Resolve conflicts so both sides' intent survives; a conflict that needs a design call is a `needs-decision`, so run `git rebase --abort` and report it. Once rebased, run the tests in scope for the files that conflicted or changed upstream and the quality gate as the gate role does, and commit any fixes.
+- **review-fix**: Apply these review findings or adversary counterexamples: `<findings or counterexamples>`. Fix a counterexample in production code; never delete or weaken a counterexample test. Then run the tests in scope for the fixes and the quality gate as the gate role does, skipping its adversary step, before you commit.
+- **sync**: Rebase this branch onto `origin/<default>`. Resolve conflicts so both sides' intent survives; a conflict that needs a design call is a `needs-decision`, so run `git rebase --abort` and report it. Once rebased, run the tests in scope for the files that conflicted or changed upstream and the quality gate as the gate role does, skipping its adversary step, and commit any fixes.
 - **full-suite**: Run the full test suite once. If anything fails, fix it and rerun only the failing tests and the tests in scope for your fix, not the whole suite, at most 3 rounds; if it's still red, report `blocked` with the remaining failures in one line each.
 
 ## Adversary brief
@@ -121,7 +121,7 @@ The adversary never sees the plan file, the seam reports, or your reasoning abou
 ```
 You are the adversary sub-agent of an implement session.
 Worktree: <absolute path>. Branch: <branch>. Stay on this branch.
-Spec: <the plan's spec tickets>. Change: this branch's diff since origin/<default>.
+Spec: <the originating issue and the plan's spec tickets>. Change: this branch's diff since origin/<default>.
 
 Call the Skill tool with "adversary" and attack this change against the spec.
 Commit your counterexample tests to the current branch, after confirming
