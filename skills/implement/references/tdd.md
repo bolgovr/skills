@@ -29,7 +29,7 @@ These principles hold in any language:
 - **Failure messages should diagnose.** Use the assertion library's semantic matchers so a failure shows expected vs. actual, not just `false`.
 - **Tests are first-class code.** They're held to the same standard as production code. Refactoring them and deleting obsolete ones belongs to the review stage; in the loop, touch only the tests you are writing.
 - **Property-based and table-driven where it fits.** Parameterize over cases with the framework's own feature (`it.each`, `@pytest.mark.parametrize`, Go subtests) instead of copy-pasting or looping in the test body. A table-driven test is one behavior, and each new row is its own red-green cycle. Use property-based tests for invariants (idempotence, round-trips, commutativity) only if the project already has a library for them; otherwise report `needs-decision` rather than adding the dependency.
-- **Coverage is a smell detector, not a goal.** Low coverage flags untested areas; high coverage proves nothing about assertion quality. Aim for every behavior of the seam, including its edges, to have a test, not for a percentage.
+- **Every changed line is covered, with no percentage target.** High coverage proves nothing about assertion quality, so aim for every behavior of the seam, including its edges, to have a test. But an uncovered new or changed line means a red-green cycle slipped, and the quality gate blocks on it. Unit and integration tests both count. A line may stay uncovered only through an exclusion written in the code, with a reason, in the syntax the gate names for the language; a platform call with no fake isn't a reason, it's a missing fake adapter (`needs-decision`).
 
 ## Mocking
 
@@ -75,6 +75,8 @@ A `unit` seam commonly falls at a layer boundary: Controller → Use Case, Use C
 - **One slice at a time.** One test, one minimal implementation per cycle.
 - **Refactoring is not part of the loop.** It belongs to the review stage (see the `code-review` skill), not the implementation cycle.
 
-Run typechecking and only the test files in scope (the ones you touch, unit or integration) regularly. The quality gate runs later in its own stage, and the full test suite runs exactly once, right before the PR opens, so don't run either here.
+Run typechecking and only the test files in scope (the ones you touch, unit or integration) regularly. The full quality gate runs later in its own stage, and the full test suite runs exactly once, right before the PR opens, so don't run either here.
+
+Your last step before reporting `done`: call the Skill tool with "quality-gate" in coverage-only mode on your seam's files (source and tests). It runs only the coverage check, scoped to those files. Close each uncovered line it lists with a red-green cycle or, where no test can reach the line, an in-code exclusion with a reason. Rerun coverage-only mode until it passes.
 
 Don't end your turn to wait on a background command: as a sub-agent, ending your turn is returning your report. Run long commands (a build, a large test file) in the foreground with a timeout that fits, and keep only the lines you need from their output.
