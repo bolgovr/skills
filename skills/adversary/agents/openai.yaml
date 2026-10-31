@@ -1,0 +1,3 @@
+interface:
+  display_name: "Adversary"
+  short_description: "Prove a change breaks its spec with failing tests"

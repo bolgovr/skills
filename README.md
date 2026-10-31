@@ -39,6 +39,7 @@ Reachable only by typing the skill's name.
 
 Reachable by the model or the user.
 
+- [`adversary`](./skills/adversary/SKILL.md): try to break a change against its spec, proving each break with a failing test (a counterexample); runs last in the quality gate.
 - [`architecture-principles`](./skills/architecture-principles/SKILL.md): clean architecture layering and SOLID principles, as a reference for structuring or reviewing code.
 - [`code-review`](./skills/code-review/SKILL.md): review the changes since a fixed point along two axes, standards and spec, via parallel sub-agents.
 - [`domain-modeling`](./skills/domain-modeling/SKILL.md): build and sharpen a project's domain model, writing or editing `CONTEXT.md` and ADRs.
