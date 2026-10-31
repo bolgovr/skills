@@ -46,11 +46,14 @@ After dispatching a sub-agent, end your turn; its completion notification re-inv
    - `blocked`: decide the next step with the user. Don't start the next seam on top of a broken one.
 4. **Observability.** Dispatch a `general-purpose` observable agent.
 5. **Quality gate.** Dispatch a `general-purpose` gate agent.
-6. **Review.** Call the Skill tool with "code-review" yourself, with `origin/<default>` as the fixed point. It runs its own sub-agents.
-7. **Fix review findings.** If the review found anything, dispatch one `general-purpose` review-fix agent with all the findings. It escalates the same way seam agents do and reruns the gate before it commits.
-8. **Sync with the default branch.** Run `git fetch` and `git log --oneline HEAD..origin/<default>`. If it lists anything, others have landed work since you branched: dispatch a `general-purpose` sync agent to rebase onto it and rerun the gate. If it lists nothing, move on.
-9. **Full test suite.** Dispatch a `general-purpose` full-suite agent. This is the only time the full suite runs in the session (see Running tests below).
-10. **Ship.** Check `git status` is clean and skim `git log --oneline origin/<default>..HEAD`. Then push the feature branch and open a Pull Request against the default branch.
+6. **Adversary.** Dispatch a `general-purpose` adversary agent with the Adversary brief below, not the standard one, so it sees only the spec, the diff, and the existing tests. It commits its counterexample tests, which stay in the suite as regression tests.
+   - Counterexamples: dispatch a review-fix agent with them as its findings (it fixes production code, never the counterexample tests), then dispatch the adversary once more to confirm. Stop after at most 3 rounds; if counterexamples remain, decide the next step with the user, as for `blocked`.
+   - `needs-decision` (a counterexample resting on an ambiguous spec line): put it to the user and record the answer under Decisions. The counterexample stays failing until they decide.
+7. **Review.** Call the Skill tool with "code-review" yourself, with `origin/<default>` as the fixed point. It runs its own sub-agents.
+8. **Fix review findings.** If the review found anything, dispatch one `general-purpose` review-fix agent with all the findings. It escalates the same way seam agents do and reruns the gate before it commits.
+9. **Sync with the default branch.** Run `git fetch` and `git log --oneline HEAD..origin/<default>`. If it lists anything, others have landed work since you branched: dispatch a `general-purpose` sync agent to rebase onto it and rerun the gate. If it lists nothing, move on.
+10. **Full test suite.** Dispatch a `general-purpose` full-suite agent. This is the only time the full suite runs in the session (see Running tests below).
+11. **Ship.** Check `git status` is clean and skim `git log --oneline origin/<default>..HEAD`. Then push the feature branch and open a Pull Request against the default branch.
 
 ## Running tests
 
@@ -74,7 +77,7 @@ When the shape of that interface is itself in question (how deep the module is, 
 
 ## Sub-agent brief
 
-Build every brief from this template. Fill the placeholders and swap in the role line for the agent you're dispatching:
+Build every brief except the adversary's (see Adversary brief) from this template. Fill the placeholders and swap in the role line for the agent you're dispatching:
 
 ```
 You are the <role> sub-agent of an implement session.
@@ -106,11 +109,27 @@ Role lines (`<skill dir>` is the base directory the harness gave when this skill
 - **explore**: Read `CONTEXT.md` and the ADRs in the area, find the code the spec touches, and propose candidate seams (the public interface, what sits behind it, its kind, where its tests go), including one `integration` seam per user-facing entry point the spec touches. Change nothing and don't commit. Instead of the standard report, reply with the relevant files and the candidate seams, one line each, at most 25 lines.
 - **seam**: Implement `<kind>` seam `<name>` from the plan, test-first. Before writing anything, call the Skill tool with "architecture-principles" and read `<skill dir>/references/tdd.md`; follow it on every cycle, using its section for your seam's kind. Before reporting `done`, call the Skill tool with "quality-gate" in coverage-only mode on your seam's files and close what it finds, as `tdd.md` describes.
 - **observable**: Call the Skill tool with "observable" and apply it to this branch's changes since `origin/<default>`.
-- **gate**: Call the Skill tool with "quality-gate", scoped to this branch's changes since `origin/<default>`. Fix what fails and rerun, at most 3 rounds; if it's still red, report `blocked` with the remaining failures in one line each.
+- **gate**: Call the Skill tool with "quality-gate", scoped to this branch's changes since `origin/<default>`. Its adversary step reports `adversary: not run (caller dispatches it)`, which is expected: the adversary runs as its own flow step. Fix what fails and rerun, at most 3 rounds; if it's still red, report `blocked` with the remaining failures in one line each.
 - **review-fix**: Apply these review findings: `<findings>`. Then run the tests in scope for the fixes and the quality gate as the gate role does, before you commit.
 - **sync**: Rebase this branch onto `origin/<default>`. Resolve conflicts so both sides' intent survives; a conflict that needs a design call is a `needs-decision`, so run `git rebase --abort` and report it. Once rebased, run the tests in scope for the files that conflicted or changed upstream and the quality gate as the gate role does, and commit any fixes.
 - **full-suite**: Run the full test suite once. If anything fails, fix it and rerun only the failing tests and the tests in scope for your fix, not the whole suite, at most 3 rounds; if it's still red, report `blocked` with the remaining failures in one line each.
 
+## Adversary brief
+
+The adversary never sees the plan file, the seam reports, or your reasoning about the change, so it gets this brief instead of the template above:
+
+```
+You are the adversary sub-agent of an implement session.
+Worktree: <absolute path>. Branch: <branch>. Stay on this branch.
+Spec: <the plan's spec tickets>. Change: this branch's diff since origin/<default>.
+
+Call the Skill tool with "adversary" and attack this change against the spec.
+Commit your counterexample tests to the current branch, after confirming
+`git branch --show-current` is neither main nor master. Never push.
+
+Reply with the adversary skill's report and nothing else, at most 15 lines.
+```
+
 ## Without a sub-agent tool
 
-Where there is no tool for dispatching sub-agents, run the same flow inline, in the same order, with the same plan file. Treat each role line as your checklist for that step, and before the first seam, call the Skill tool with "architecture-principles" and read `<skill dir>/references/tdd.md`. Finish each seam by calling the Skill tool with "quality-gate" in coverage-only mode on the seam's files, as `tdd.md` describes, before starting the next.
+Where there is no tool for dispatching sub-agents, run the same flow inline, in the same order, with the same plan file. Treat each role line as your checklist for that step, and before the first seam, call the Skill tool with "architecture-principles" and read `<skill dir>/references/tdd.md`. Finish each seam by calling the Skill tool with "quality-gate" in coverage-only mode on the seam's files, as `tdd.md` describes, before starting the next. At the adversary step, call the Skill tool with "adversary" and run it inline against the spec, the diff, and the existing tests only, setting the plan aside, and flag its result **not independent** when you report it to the user.

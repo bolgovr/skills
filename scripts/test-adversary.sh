@@ -92,6 +92,52 @@ awk '/^## Coverage-only mode/ { on = 1; next } /^## / { on = 0 } on' "$QG_MD" |
   grep -qi 'adversary' ||
   fail "skills/quality-gate/SKILL.md coverage-only mode does not skip the adversary"
 
+# --- skills/implement ---------------------------------------------------------
+
+IMPL_MD="$REPO/skills/implement/SKILL.md"
+
+# section <heading>: the lines of <heading>'s section, up to the next heading
+# of the same or higher level.
+section() {
+  awk -v h="$1" '$0 == h { on = 1; next } on && /^##? / { on = 0 } on' "$IMPL_MD"
+}
+
+# Flow: Quality gate, then Adversary, then Review, as consecutive steps.
+section '## Flow' | grep -E '^[0-9]+\. \*\*' | sed -E 's/^[0-9]+\. \*\*([^*.]*).*/\1/' |
+  tr '\n' '|' | grep -qF 'Quality gate|Adversary|Review|' ||
+  fail "skills/implement/SKILL.md Flow has no Adversary step between Quality gate and Review"
+
+# Flow steps stay numbered 1..n with no gap or repeat.
+section '## Flow' | grep -oE '^[0-9]+\. \*\*' | grep -oE '^[0-9]+' |
+  awk '$1 != NR { bad = 1 } END { exit bad }' ||
+  fail "skills/implement/SKILL.md Flow steps are not numbered 1..n"
+
+# The adversary step: fix through review-fix, confirm, bounded, disputes to the user.
+ADV_STEP="$(section '## Flow' | awk '/^[0-9]+\. \*\*/ { on = /^[0-9]+\. \*\*Adversary/ } on')"
+for s in 'review-fix' 'once more to confirm' 'at most 3 rounds' 'needs-decision'; do
+  grep -qiF -- "$s" <<<"$ADV_STEP" ||
+    fail "skills/implement/SKILL.md Adversary step does not mention \"$s\""
+done
+
+# Its own brief: spec tickets, worktree, branch, commits counterexamples, and
+# never the plan file.
+ADV_BRIEF="$(section '## Adversary brief')"
+[ -n "$ADV_BRIEF" ] || fail "skills/implement/SKILL.md has no Adversary brief section"
+for s in 'Skill tool with "adversary"' 'Spec:' 'Worktree:' 'Branch:' 'commit'; do
+  grep -qiF -- "$s" <<<"$ADV_BRIEF" ||
+    fail "skills/implement/SKILL.md Adversary brief does not contain \"$s\""
+done
+grep -qE '^Read \.implement/plan\.md' <<<"$ADV_BRIEF" &&
+  fail "skills/implement/SKILL.md Adversary brief tells the adversary to read the plan file"
+
+# The gate role (and the review-fix and sync reruns that follow it) skips the adversary.
+grep -E '^- \*\*gate\*\*:' "$IMPL_MD" | grep -qiF 'adversary: not run (caller dispatches it)' ||
+  fail "skills/implement/SKILL.md gate role does not expect \`adversary: not run (caller dispatches it)\`"
+
+# Inline fallback flags the adversary run as not independent.
+section '## Without a sub-agent tool' | grep -qiF 'not independent' ||
+  fail "skills/implement/SKILL.md Without a sub-agent tool does not flag the adversary run not independent"
+
 # ------------------------------------------------------------------------------
 
 if [ "$failures" -gt 0 ]; then
