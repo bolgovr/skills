@@ -4,7 +4,8 @@ set -uo pipefail
 # Test for skills/quality-gate's line-coverage rule. Checks the invariants a
 # grep can pin down: each template's Coverage step names its in-code exclusion
 # syntax, no dropped exclusion reason survives, the Swift test binary path is
-# current, and the skill documents a coverage-only mode. The rule's wording is
+# current, and the skill documents a coverage-only mode and the non-blocking
+# verdict line for a production file no template matches. The rule's wording is
 # verified by review, not here.
 
 REPO="$(cd "$(dirname "$0")/.." && pwd)"
@@ -44,6 +45,8 @@ grep -qF '.build/debug/<TestTarget>.xctest/Contents/MacOS/<TestTarget>' "$GATE/s
   fail "swift-template.md does not name the <TestTarget> binary path"
 
 grep -qi 'coverage-only mode' "$GATE/SKILL.md" || fail "SKILL.md does not document a coverage-only mode"
+grep -qF 'coverage: no template for <language>' "$GATE/SKILL.md" ||
+  fail "SKILL.md does not name the \`coverage: no template for <language>\` verdict line"
 
 if [ "$failures" -gt 0 ]; then
   echo "$failures case(s) failed"
