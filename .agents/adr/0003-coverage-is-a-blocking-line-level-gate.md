@@ -10,7 +10,7 @@
 - A changed production file in a language with no template is reported as `coverage: no template for <language>` and doesn't block. This is a known limit: there is no measuring command to run, and failing every such change would block work the gate can't judge. A template for that language can come later.
 - Seam agents run `quality-gate`'s coverage-only mode on their seam's files before reporting `done`, so gaps close inside the red-green loop rather than at the final gate.
 
-Branch coverage was considered and rejected. No toolchain measures the outcomes of `&&` and `||` operands, Go reports no branch data, Swift's reports have no branch records, and Dart's branch data misses ternaries and implicit `else`. A branch rule would be enforceable in some languages and silently hollow in others. Branch thoroughness is delegated instead to the adversary planned in #20, which reads the change for untested paths rather than counting them.
+Branch coverage was considered and rejected. No toolchain measures the outcomes of `&&` and `||` operands, Go reports no branch data, Swift's reports have no branch records, and Dart's branch data misses ternaries and implicit `else`. A branch rule would be enforceable in some languages and silently hollow in others. Branch thoroughness is delegated instead to the adversary ([ADR 0004](0004-an-independent-adversary-proves-breaks-with-failing-tests.md)), which reads the change for untested paths rather than counting them.
 
 ## Invariants this creates
 
