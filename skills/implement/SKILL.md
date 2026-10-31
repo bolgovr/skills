@@ -104,7 +104,7 @@ notes: <questions, surprises, decisions made>
 Role lines (`<skill dir>` is the base directory the harness gave when this skill was invoked):
 
 - **explore**: Read `CONTEXT.md` and the ADRs in the area, find the code the spec touches, and propose candidate seams (the public interface, what sits behind it, its kind, where its tests go), including one `integration` seam per user-facing entry point the spec touches. Change nothing and don't commit. Instead of the standard report, reply with the relevant files and the candidate seams, one line each, at most 25 lines.
-- **seam**: Implement `<kind>` seam `<name>` from the plan, test-first. Before writing anything, call the Skill tool with "architecture-principles" and read `<skill dir>/references/tdd.md`; follow it on every cycle, using its section for your seam's kind.
+- **seam**: Implement `<kind>` seam `<name>` from the plan, test-first. Before writing anything, call the Skill tool with "architecture-principles" and read `<skill dir>/references/tdd.md`; follow it on every cycle, using its section for your seam's kind. Before reporting `done`, call the Skill tool with "quality-gate" in coverage-only mode on your seam's files and close what it finds, as `tdd.md` describes.
 - **observable**: Call the Skill tool with "observable" and apply it to this branch's changes since `origin/<default>`.
 - **gate**: Call the Skill tool with "quality-gate", scoped to this branch's changes since `origin/<default>`. Fix what fails and rerun, at most 3 rounds; if it's still red, report `blocked` with the remaining failures in one line each.
 - **review-fix**: Apply these review findings: `<findings>`. Then run the tests in scope for the fixes and the quality gate as the gate role does, before you commit.
@@ -113,4 +113,4 @@ Role lines (`<skill dir>` is the base directory the harness gave when this skill
 
 ## Without a sub-agent tool
 
-Where there is no tool for dispatching sub-agents, run the same flow inline, in the same order, with the same plan file. Treat each role line as your checklist for that step, and before the first seam, call the Skill tool with "architecture-principles" and read `<skill dir>/references/tdd.md`.
+Where there is no tool for dispatching sub-agents, run the same flow inline, in the same order, with the same plan file. Treat each role line as your checklist for that step, and before the first seam, call the Skill tool with "architecture-principles" and read `<skill dir>/references/tdd.md`. Finish each seam with its coverage-only quality gate run before starting the next.
