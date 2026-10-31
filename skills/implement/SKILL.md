@@ -30,7 +30,7 @@ Never commit or push on `main` or `master`. While this skill is active, a PreToo
 `.implement/plan.md` is the session's durable state and the brief every sub-agent reads first. Keep it short:
 
 - **Spec**: the tickets or spec path, one line each.
-- **Seams**: one line per confirmed seam, in implementation order, with its status (`todo`, `in progress`, `done`, `blocked`).
+- **Seams**: one line per confirmed seam, in implementation order, with its kind (`unit` or `integration`) and its status (`todo`, `in progress`, `done`, `blocked`).
 - **Decisions**: the user's answers and the sub-agents' local choices, one line each.
 
 Update it after every report. After a context compaction, re-read it instead of re-asking anyone.
@@ -54,15 +54,15 @@ After dispatching a sub-agent, end your turn; its completion notification re-inv
 
 ## Running tests
 
-During development, every agent runs only the tests in scope: the test files for the code it touched and the tests of the seam it's working on, plus typechecking. The full test suite runs exactly once, in the full-suite step right before the PR opens. Every sub-agent follows this rule, so the brief states it; no role other than full-suite runs the full suite.
+During development, every agent runs only the tests in scope: the test files for the code it touched and the tests of the seam it's working on, unit or integration, plus typechecking. The full test suite, both kinds, runs exactly once, in the full-suite step right before the PR opens. Every sub-agent follows this rule, so the brief states it; no role other than full-suite runs the full suite.
 
 ## Seams
 
-Before confirming seams with the user, read the "Seams: where tests go" section of `<skill dir>/references/tdd.md` (`<skill dir>` is the base directory the harness gave when this skill was invoked), which defines what a **seam** is and where one commonly falls.
+Before confirming seams with the user, read the "Seams: where tests go" section of `<skill dir>/references/tdd.md` (`<skill dir>` is the base directory the harness gave when this skill was invoked), which defines what a **seam** is and where one commonly falls, and the "Two kinds of test" section, which defines `unit` and `integration` seams.
 
 **Test only at pre-agreed seams.** Before any seam agent starts, write down the seams under test and confirm them with the user. You can't test everything, so agreeing the seams up front is how testing effort lands on the critical paths and complex logic instead of every edge case.
 
-Ask: "What's the public interface, and which seams should we test?"
+Ask: "What's the public interface, which seams should we test, and is each a `unit` or an `integration` seam?" Every seam is exactly one kind. By default, propose one `integration` seam per user-facing entry point the spec touches, ordered after the `unit` seams it depends on; the user may drop or reorder it.
 
 When the shape of that interface is itself in question (how deep the module is, where the seam belongs, what the interface should expose), argue it in these terms:
 
@@ -103,8 +103,8 @@ notes: <questions, surprises, decisions made>
 
 Role lines (`<skill dir>` is the base directory the harness gave when this skill was invoked):
 
-- **explore**: Read `CONTEXT.md` and the ADRs in the area, find the code the spec touches, and propose candidate seams (the public interface, what sits behind it, where its tests go). Change nothing and don't commit. Instead of the standard report, reply with the relevant files and the candidate seams, one line each, at most 25 lines.
-- **seam**: Implement seam `<name>` from the plan, test-first. Before writing anything, call the Skill tool with "architecture-principles" and read `<skill dir>/references/tdd.md`; follow it on every cycle.
+- **explore**: Read `CONTEXT.md` and the ADRs in the area, find the code the spec touches, and propose candidate seams (the public interface, what sits behind it, its kind, where its tests go), including one `integration` seam per user-facing entry point the spec touches. Change nothing and don't commit. Instead of the standard report, reply with the relevant files and the candidate seams, one line each, at most 25 lines.
+- **seam**: Implement `<kind>` seam `<name>` from the plan, test-first. Before writing anything, call the Skill tool with "architecture-principles" and read `<skill dir>/references/tdd.md`; follow it on every cycle, using its section for your seam's kind.
 - **observable**: Call the Skill tool with "observable" and apply it to this branch's changes since `origin/<default>`.
 - **gate**: Call the Skill tool with "quality-gate", scoped to this branch's changes since `origin/<default>`. Fix what fails and rerun, at most 3 rounds; if it's still red, report `blocked` with the remaining failures in one line each.
 - **review-fix**: Apply these review findings: `<findings>`. Then run the tests in scope for the fixes and the quality gate as the gate role does, before you commit.
