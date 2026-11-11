@@ -26,10 +26,8 @@ npx skills@latest update <name>
 
 Reachable only by typing the skill's name.
 
-- [`claude-handoff`](./skills/claude-handoff/SKILL.md): hand the current conversation off to a fresh background agent that picks up the work immediately.
 - [`grill-with-docs`](./skills/grill-with-docs/SKILL.md): a relentless interview to sharpen a plan or design, which also creates docs (ADRs and glossary) as it goes.
 - [`implement`](./skills/implement/SKILL.md): implement a piece of work based on a spec or set of tickets.
-- [`loop-me`](./skills/loop-me/SKILL.md): grill the user about specs for the workflows they want to build, within this workspace.
 - [`refactor`](./skills/refactor/SKILL.md): plan a refactor from a symbol you name, examining every module it reaches and their tests, and publish a plan that `/implement` can run.
 - [`retro`](./skills/retro/SKILL.md): run a retrospective on a coding session and suggest improvements to the agent's environment (navigation, checks, standards, tooling).
 - [`setup-repo-skills`](./skills/setup-repo-skills/SKILL.md): configure a repo for the engineering skills, its issue tracker and domain doc layout. Run once before first use of the other engineering skills.
