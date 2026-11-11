@@ -142,6 +142,8 @@ Role lines (`<skill dir>` is the base directory the harness gave when this skill
 - **sync**: Rebase this branch onto `origin/<default>`. Resolve conflicts so both sides' intent survives; a conflict that needs a design call is a `needs-decision`, so run `git rebase --abort` and report it. Once rebased, run the tests in scope for the files that conflicted, plus lint and typecheck on them, and commit any fixes. Don't rerun the quality gate: the final step does.
 - **final**: Call the Skill tool with "quality-gate", scoped to this branch's changes since `origin/<default>`, skipping its adversary step, and make sure the full test suite runs exactly once along the way (run it yourself, with the plan's Commands, if the gate's own steps didn't). If anything fails, fix it and rerun only the failing checks and the tests in scope for your fix, not the whole suite, at most 3 rounds; if it's still red, report `blocked` with the remaining failures in one line each.
 
+Dispatch the gate and final agents on the cheapest model the dispatch tool offers (in Claude Code, `model: "haiku"`): most of their work is running commands and reading exit codes. Add this sentence to their role line: `Fix only what a formatter or a lint autofix repairs, and report anything else as blocked.` On `blocked`, dispatch the same role again on the session's model, without that sentence. Every other role runs on the session's model.
+
 ## Adversary brief
 
 The adversary never sees the plan file, the seam reports, or your reasoning about the change, so it gets this brief instead of the template above:
