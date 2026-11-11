@@ -25,3 +25,13 @@ Run `scripts/check.sh` before committing. It checks that:
 Enable it as a pre-commit hook once per clone with `git config core.hooksPath .githooks`. A skill that calls one shipped by another plugin fails it: inline what the skill needs instead.
 
 Bump `.claude-plugin/plugin.json`'s `version` only when you cut a release for plugin users, not on every change ([ADR 0002](../.agents/adr/0002-ship-as-a-claude-code-plugin.md)).
+
+## Agent skills
+
+### Issue tracker
+
+Issues live in GitHub Issues for bolgovr/skills, via the `gh` CLI. See `docs/agents/issue-tracker.md`.
+
+### Domain docs
+
+Single-context: `CONTEXT.md` at the root, ADRs in `.agents/adr/`. See `docs/agents/domain.md`.

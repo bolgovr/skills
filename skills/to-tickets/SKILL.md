@@ -31,7 +31,7 @@ Call the Skill tool with "architecture-principles" for the clean architecture la
 
 <vertical-slice-rules>
 
-- Each slice cuts a narrow but COMPLETE path through every layer the feature touches: vertical, NOT a horizontal slice confined to one layer (e.g. "the schema" or "the UI" alone)
+- Each slice cuts a narrow but complete path through every layer the feature touches: a vertical slice, not a horizontal one confined to one layer (e.g. "the schema" or "the UI" alone)
 - Within a slice, dependencies still point inward per the Dependency Rule: a Use Case or Entity a ticket adds must not name a Controller, Presenter, or framework type from another ticket
 - Where a slice's inward edge outruns what's built outward, e.g. a Use Case needs a result shape the Presenter isn't built yet to define, give that edge a Use Case Output the ticket owns, so a later ticket implements it without reopening this one and the two tickets aren't forced into a blocking edge they don't need
 - A completed slice is demoable or verifiable on its own
@@ -69,7 +69,7 @@ Publish the approved tickets. **How** depends on the tracker `/setup-repo-skills
 
 Work the **frontier**: any ticket whose blockers are all done. For a purely linear chain that means top to bottom.
 
-Do NOT close or modify any parent issue.
+Leave any parent issue open and unmodified.
 
 <local-ticket-template>
 
