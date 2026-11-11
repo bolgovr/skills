@@ -283,7 +283,13 @@ const STEPS = [
       'A check fails: dispatch a review-fix agent with the check\'s name and run id, push its commit, and watch again, at most 3 rounds.',
       'The failure came from a local command that differs from CI\'s: the agent corrects the plan\'s Commands line too.',
       'No CI in the repo: skip this step.' ] },
-  { id: 's13', n: '13', title: 'Follow-ups', who: 'Orchestrator and user', c: 'user',
+  { id: 's13', n: '13', title: 'Merge impact', who: 'Orchestrator dispatches an impact agent', c: 'agent',
+    points: [
+      'Runs once the checks are green and the branch\'s head is final.',
+      'The agent calls the merge-impact skill on the PR and writes its report into the PR description, below the body from step 11: blast radius, rule changes, a verdict, and the spots worth a reviewer\'s eyes.',
+      'The orchestrator tells the user the verdict.' ],
+    branches: [ 'An unannounced rule change is behaviour the spec never asked for: it goes to the user with the follow-ups, as a bug to fix or an intention to record.' ] },
+  { id: 's14', n: '14', title: 'Follow-ups', who: 'Orchestrator and user', c: 'user',
     points: [
       'Lists what the session deferred: review findings the user chose not to fix, the adversary\'s suspicions, counterexamples ruled out of scope, and bugs agents noticed outside the change.',
       'Asks the user once whether to file them as issues, and files the ones they pick.' ] },
@@ -301,7 +307,7 @@ document.getElementById('ref').innerHTML = STEPS.map(s => '<article style="--c: 
 // ---------- diagram ----------
 const NS = 'http://www.w3.org/2000/svg';
 const svg = document.getElementById('flow');
-const VW = 900, VH = 1800;
+const VW = 900, VH = 1900;
 svg.setAttribute('viewBox', '0 0 ' + VW + ' ' + VH);
 const X = { user: 160, orch: 450, agent: 770 };
 const HW = 100, HH = 27, DH = 32;
@@ -364,9 +370,11 @@ const NODES = [
   { id: 'u11', lane: 'user', y: 1470, t: 'Reviews the PR', s: 'can overrule listed assumptions', step: 's11' },
   { id: 's12', lane: 'orch', y: 1570, t: '12 · Watch CI', s: 'skipped when the repo has no CI', step: 's12' },
   { id: 'a12', lane: 'agent', y: 1570, t: 'Review-fix agent', s: 'failing check, up to 3 rounds', step: 's12' },
-  { id: 's13', lane: 'orch', y: 1670, t: '13 · Follow-ups', s: 'ask once, file what is picked', step: 's13' },
-  { id: 'u13', lane: 'user', y: 1670, t: 'Picks follow-ups', s: 'chooses which become issues', step: 's13' },
-  { id: 'end', lane: 'orch', y: 1756, t: 'Done', shape: 'pill', step: 's13' },
+  { id: 's13', lane: 'orch', y: 1670, t: '13 · Merge impact', s: 'report goes into the PR description', step: 's13' },
+  { id: 'a13', lane: 'agent', y: 1670, t: 'Impact agent', s: 'blast radius, rule changes, verdict', step: 's13' },
+  { id: 's14', lane: 'orch', y: 1770, t: '14 · Follow-ups', s: 'ask once, file what is picked', step: 's14' },
+  { id: 'u14', lane: 'user', y: 1770, t: 'Picks follow-ups', s: 'chooses which become issues', step: 's14' },
+  { id: 'end', lane: 'orch', y: 1856, t: 'Done', shape: 'pill', step: 's14' },
 ];
 const N = Object.fromEntries(NODES.map(n => [n.id, n]));
 const hh = n => n.shape === 'diamond' ? DH : (n.id === 'end' ? 18 : HH);
@@ -410,7 +418,7 @@ down('s3', 'd3'); down('d3', 's4', 'all seams done');
 down('s4', 's5'); down('s5', 's6', 'green'); down('s6', 's7', 'same turn');
 down('s7', 'd8', 'both reported'); down('d8', 's8', 'findings or counterexamples');
 down('s8', 's8b'); down('s8b', 's9', 'clean'); down('s9', 's10'); down('s10', 's11', 'green');
-down('s11', 's12'); down('s12', 's13', 'checks pass'); down('s13', 'end');
+down('s11', 's12'); down('s12', 's13', 'checks pass'); down('s13', 's14'); down('s14', 'end');
 
 pair('s1', 'brief', 'report, 35 lines');
 pair('s3', 'brief', 'status report');
@@ -423,11 +431,12 @@ pair('s8b', 'confirming brief', 'result');
 pair('s9', 'on conflict', 'rebased', true);
 pair('s10', 'brief', 'status report');
 pair('s12', 'check fails', 'push, watch again', true);
+pair('s13', 'brief', 'verdict');
 label(770, 720, 'run together, fixed in one pass', 'middle');
 
 ask('s2', 'asks', 'confirms');
 ask('s11', 'Pull Request');
-ask('s13', 'asks once', 'picks');
+ask('s14', 'asks once', 'picks');
 
 // seam loop: done or partial goes back up to the dispatch
 edge('M520,' + (470 - DH * 0.3 - 1) + ' V' + (370 + HH), 'loop');
