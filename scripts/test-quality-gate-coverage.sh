@@ -34,6 +34,7 @@ expect_names dart-template.md 'coverage:ignore-line'
 expect_names typescript-template.md 'v8 ignore next'
 expect_names typescript-template.md 'istanbul ignore next'
 expect_names go-template.md 'coverage-exclude:'
+expect_names python-template.md 'pragma: no cover'
 expect_names swift-template.md 'coverage-exclude:'
 
 if grep -rqiF 'platform call with no fake' "$GATE"; then

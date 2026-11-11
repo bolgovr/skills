@@ -133,7 +133,7 @@ grep -qiF 'findings' <<<"$ADV_STEP" &&
 # never the plan file.
 ADV_BRIEF="$(section "$IMPL_MD" '## Adversary brief')"
 [ -n "$ADV_BRIEF" ] || fail "skills/implement/SKILL.md has no Adversary brief section"
-for s in 'Skill tool with "adversary"' 'Spec:' 'originating issue' 'Worktree:' 'Branch:' 'commit'; do
+for s in 'Skill tool with "adversary"' 'Spec:' 'originating issue' 'Worktree:' 'Branch:' 'commit' 'confirming run'; do
   grep -qiF -- "$s" <<<"$ADV_BRIEF" ||
     fail "skills/implement/SKILL.md Adversary brief does not contain \"$s\""
 done
@@ -144,11 +144,13 @@ grep -qE '^Read \.implement/plan\.md' <<<"$ADV_BRIEF" &&
 grep -E '^- \*\*gate\*\*:' "$IMPL_MD" | grep -qiF 'adversary: not run (caller dispatches it)' ||
   fail "skills/implement/SKILL.md gate role does not expect \`adversary: not run (caller dispatches it)\`"
 
-# The review-fix and sync gate reruns skip the adversary too, stated in their
-# own role lines so it also holds inline.
+# The final role's gate rerun skips the adversary too, stated in its own role
+# line so it also holds inline. Review-fix and sync leave the gate to it.
+grep -E '^- \*\*final\*\*:' "$IMPL_MD" | grep -qiF 'skipping its adversary step' ||
+  fail "skills/implement/SKILL.md final role does not skip the adversary on its gate rerun"
 for r in review-fix sync; do
-  grep -E "^- \*\*$r\*\*:" "$IMPL_MD" | grep -qiF 'skipping its adversary step' ||
-    fail "skills/implement/SKILL.md $r role does not skip the adversary on its gate rerun"
+  grep -E "^- \*\*$r\*\*:" "$IMPL_MD" | grep -qiF "Don't rerun the quality gate" ||
+    fail "skills/implement/SKILL.md $r role does not leave the gate rerun to the final step"
 done
 
 # The review-fix role takes counterexamples and never deletes or weakens one.
