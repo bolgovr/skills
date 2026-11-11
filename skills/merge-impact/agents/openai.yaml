@@ -1,0 +1,3 @@
+interface:
+  display_name: "Merge Impact"
+  short_description: "Blast radius and review verdict for a PR"
