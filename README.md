@@ -43,7 +43,7 @@ Reachable by the model or the user.
 - [`code-review`](./skills/code-review/SKILL.md): review the changes since a fixed point along two axes, standards and spec, via parallel sub-agents.
 - [`domain-modeling`](./skills/domain-modeling/SKILL.md): build and sharpen a project's domain model, writing or editing `CONTEXT.md` and ADRs.
 - [`grilling`](./skills/grilling/SKILL.md): grill the user relentlessly about a plan, decision, or idea, stress-testing their thinking round by round.
-- [`merge-impact`](./skills/merge-impact/SKILL.md): work out what merging a PR would do (blast radius, changed business rules, a Merge, Skim, or Review carefully verdict) and write it into the PR description.
+- [`merge-impact`](./skills/merge-impact/SKILL.md): work out what merging a PR would do (blast radius, changed business rules, a Merge, Skim, or Review carefully verdict) and write it into the PR description, before the PR is opened where it can.
 - [`observable`](./skills/observable/SKILL.md): structured logging discipline for any language, so features that run in production leave evidence they work.
 - [`quality-gate`](./skills/quality-gate/SKILL.md): run the language-appropriate quality gate (build, lint, typecheck, tests) before implementation work is considered done, and check the change against clean architecture and SOLID.
 
