@@ -1,6 +1,6 @@
 ---
 name: merge-impact
-description: "Work out what merging a pull request would actually do, and write it into the PR description: the blast radius (which entry points, flows, data, and consumers the change reaches), the business rules and flows it changes (before and after, announced or not), a verdict for the reviewer (Merge, Skim, or Review carefully) with the exact spots worth their eyes and the things it could not verify, and questions for the author. Use when the user asks what a PR or diff affects, what could break, how risky a change is, whether a PR is safe to merge or needs a careful review, where to focus a review, or wants a PR description that lowers the reviewer's mental load, even if they never say \"blast radius\" or \"impact\"."
+description: "Work out what merging a pull request would actually do, and write it into the PR description, ideally before the PR is opened so it opens with the report in it: the blast radius (which entry points, flows, data, and consumers the change reaches), the business rules and flows it changes (before and after, announced or not), a verdict for the reviewer (Merge, Skim, or Review carefully) with the exact spots worth their eyes and the things it could not verify, and questions for the author. Use when the user asks what a PR or diff affects, what could break, how risky a change is, whether a PR is safe to merge or needs a careful review, where to focus a review, or wants a PR description that lowers the reviewer's mental load, even if they never say \"blast radius\" or \"impact\"."
 compatibility: "Requires git, plus gh (or glab on GitLab) to read and update the pull request."
 ---
 
@@ -12,11 +12,13 @@ This is not a code review. It does not judge style, standards, or whether the co
 
 ### 1. Pin the change
 
-The user names a PR (number or URL), or means the PR of the current branch. Resolve it with `gh pr view <n> --json number,title,body,url,baseRefName,headRefName,headRefOid,author` and take the diff from `gh pr diff <n>`. Read the title, the existing description, and any linked issue: they are what the author has *announced*, and step 4 compares the code against them.
+The user names a PR (number or URL), or means the PR of the current branch, or a branch that has no PR yet. Resolve it with `gh pr view <n> --json number,title,body,url,baseRefName,headRefName,headRefOid,author` and take the diff from `gh pr diff <n>`. Read the title, the existing description, and any linked issue: they are what the author has *announced*, and step 4 compares the code against them.
 
 Tracing needs the code at the PR's head, not only the diff. If the local checkout is not at the head commit, fetch it (`git fetch origin pull/<n>/head`) and read through `git grep <pattern> FETCH_HEAD` and `git show FETCH_HEAD:<path>`, so the user's working tree is left alone.
 
-If there is no PR (a local branch, or a pasted diff), do the same analysis against `git diff <base>...HEAD` and go to step 8's no-PR path.
+**A branch that is about to become a PR.** The best time to run this is before the PR is opened, so the PR opens with the report already in its description and no reviewer ever sees it without one. Do the same analysis against `git diff <base>...HEAD`, where `<base>` is the branch the PR will target. What is announced is the draft description, if the caller names a file holding one, plus the commit messages and any linked issue. Then go to step 8's draft path.
+
+If there is no PR and none is being opened (a pasted diff, a branch the user only wants weighed), do the same analysis and go to step 8's no-PR path.
 
 ### 2. Separate behaviour from noise
 
@@ -110,6 +112,8 @@ Mechanical, safe to scroll past: one line naming the files or kinds of change.
 
 Drop any section that has nothing in it (a Merge verdict often has no review spots and no rule changes) and keep every entry to a line or two. The report exists to save reading time, so one that is longer than the diff has failed. The head SHA in the footer tells a later reader whether the report is stale.
 
-Write the new body to a temporary file and apply it with `gh pr edit <n> --body-file <file>`. Never pass the body on the command line: it is Markdown, and the shell would run its backticks. Then tell the user the verdict, its one-line reason, and the PR URL; do not repeat the whole report in chat.
+**The PR is open.** Write the new body to a temporary file and apply it with `gh pr edit <n> --body-file <file>`. Never pass the body on the command line: it is Markdown, and the shell would run its backticks. Then tell the user the verdict, its one-line reason, and the PR URL; do not repeat the whole report in chat.
+
+**The PR is not open yet (the draft path).** The report goes into the description file the PR will be opened with. If the caller named a draft file, add the report to it under the same rules: the text already there stays exactly as it is, and the markers replace an older report. Otherwise write the report to a new file, with a short summary of the change above it as the author's part. Then open the PR with that file as its body (`gh pr create --body-file <file>`), unless the caller opens it or the user only asked for the description; in that case say where the file is. Tell the user the verdict and its one-line reason. Commits pushed after this point make the report stale, so run the skill again on the open PR if the head moves.
 
 **No PR, or the edit is refused** (no permission on someone else's PR): print the report in chat as a ready-to-paste block and say plainly that nothing was posted. Do not fall back to posting a comment unless the user asks for one.

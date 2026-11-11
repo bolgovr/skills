@@ -153,7 +153,7 @@
     <tr><td>Coverage-only gate</td><td>End of a seam</td><td>Until every changed line is covered or excluded with a reason</td><td>Seam reports <code>done</code></td></tr>
     <tr><td>Gate fix and rerun</td><td>Steps 5 and 10</td><td>3 rounds</td><td>Report <code>blocked</code> with the remaining failures</td></tr>
     <tr><td>Fix and confirm</td><td>Steps 6 and 8</td><td>3 rounds</td><td>Decide the next step with the user, as for <code>blocked</code></td></tr>
-    <tr><td>CI fix and rewatch</td><td>Step 12</td><td>3 rounds</td><td>Stop and report to the user</td></tr>
+    <tr><td>CI fix and rewatch</td><td>Step 13</td><td>3 rounds</td><td>Stop and report to the user</td></tr>
   </table></div>
 
   <h2>State and guards</h2>
@@ -271,24 +271,25 @@ const STEPS = [
       'The agent calls the quality-gate skill on the finished branch, skipping its adversary step.',
       'It makes sure the full test suite runs exactly once. This is the only step that runs it.' ],
     branches: [ 'Red: fix, then rerun only the failing checks and the tests in scope for the fix, at most 3 rounds. Still red: <code>blocked</code>.' ] },
-  { id: 's11', n: '11', title: 'Ship', who: 'Orchestrator', c: 'orch',
+  { id: 's11', n: '11', title: 'Merge impact', who: 'Orchestrator dispatches an impact agent', c: 'agent',
     points: [
-      'Checks <code>git status</code> is clean and skims <code>git log --oneline origin/&lt;default&gt;..HEAD</code>.',
-      'Pushes the feature branch and opens a Pull Request against the default branch.',
-      'The PR body lists every Decision marked <code>assumed</code> under "Assumptions", so the reviewer can overrule any of them for the price of a comment.' ] },
-  { id: 's12', n: '12', title: 'Watch CI', who: 'Orchestrator', c: 'orch',
-    points: [ 'Waits for the PR\'s checks, for example <code>gh pr checks &lt;number&gt; --watch</code> as a background command.' ],
-    branches: [
-      'Green: step 13.',
-      'A check fails: dispatch a review-fix agent with the check\'s name and run id, push its commit, and watch again, at most 3 rounds.',
-      'The failure came from a local command that differs from CI\'s: the agent corrects the plan\'s Commands line too.',
-      'No CI in the repo: skip this step.' ] },
-  { id: 's13', n: '13', title: 'Merge impact', who: 'Orchestrator dispatches an impact agent', c: 'agent',
-    points: [
-      'Runs once the checks are green and the branch\'s head is final.',
-      'The agent calls the merge-impact skill on the PR and writes its report into the PR description, below the body from step 11: blast radius, rule changes, a verdict, and the spots worth a reviewer\'s eyes.',
+      'Runs before the PR is opened, so the PR opens with the report already in its description.',
+      'The orchestrator drafts the description in <code>.implement/pr-body.md</code>. It lists every Decision marked <code>assumed</code> under "Assumptions", so the reviewer can overrule any of them for the price of a comment.',
+      'The agent calls the merge-impact skill on the branch and adds its report to that file, below the draft: blast radius, rule changes, a verdict, and the spots worth a reviewer\'s eyes.',
       'The orchestrator tells the user the verdict.' ],
     branches: [ 'An unannounced rule change is behaviour the spec never asked for: it goes to the user with the follow-ups, as a bug to fix or an intention to record.' ] },
+  { id: 's12', n: '12', title: 'Ship', who: 'Orchestrator', c: 'orch',
+    points: [
+      'Checks <code>git status</code> is clean and skims <code>git log --oneline origin/&lt;default&gt;..HEAD</code>.',
+      'Pushes the feature branch and opens a Pull Request against the default branch, with <code>.implement/pr-body.md</code> as its body.' ] },
+  { id: 's13', n: '13', title: 'Watch CI', who: 'Orchestrator', c: 'orch',
+    points: [ 'Waits for the PR\'s checks, for example <code>gh pr checks &lt;number&gt; --watch</code> as a background command.' ],
+    branches: [
+      'Green: step 14.',
+      'A check fails: dispatch a review-fix agent with the check\'s name and run id, push its commit, and watch again, at most 3 rounds.',
+      'A fix was pushed: once the checks are green, the impact agent runs again, on the PR, and replaces the stale report.',
+      'The failure came from a local command that differs from CI\'s: the agent corrects the plan\'s Commands line too.',
+      'No CI in the repo: skip this step.' ] },
   { id: 's14', n: '14', title: 'Follow-ups', who: 'Orchestrator and user', c: 'user',
     points: [
       'Lists what the session deferred: review findings the user chose not to fix, the adversary\'s suspicions, counterexamples ruled out of scope, and bugs agents noticed outside the change.',
@@ -366,12 +367,12 @@ const NODES = [
   { id: 'a9', lane: 'agent', y: 1270, t: 'Sync agent', s: 'only on a rebase conflict', step: 's9' },
   { id: 's10', lane: 'orch', y: 1370, t: '10 · Final gate', s: 'on the finished branch', step: 's10' },
   { id: 'a10', lane: 'agent', y: 1370, t: 'Final agent', s: 'whole gate, full suite once', step: 's10' },
-  { id: 's11', lane: 'orch', y: 1470, t: '11 · Ship', s: 'push branch, open PR', step: 's11' },
-  { id: 'u11', lane: 'user', y: 1470, t: 'Reviews the PR', s: 'can overrule listed assumptions', step: 's11' },
-  { id: 's12', lane: 'orch', y: 1570, t: '12 · Watch CI', s: 'skipped when the repo has no CI', step: 's12' },
-  { id: 'a12', lane: 'agent', y: 1570, t: 'Review-fix agent', s: 'failing check, up to 3 rounds', step: 's12' },
-  { id: 's13', lane: 'orch', y: 1670, t: '13 · Merge impact', s: 'report goes into the PR description', step: 's13' },
-  { id: 'a13', lane: 'agent', y: 1670, t: 'Impact agent', s: 'blast radius, rule changes, verdict', step: 's13' },
+  { id: 's11', lane: 'orch', y: 1470, t: '11 · Merge impact', s: 'report goes into the PR draft', step: 's11' },
+  { id: 'a11', lane: 'agent', y: 1470, t: 'Impact agent', s: 'blast radius, rule changes, verdict', step: 's11' },
+  { id: 's12', lane: 'orch', y: 1570, t: '12 · Ship', s: 'push branch, open PR with the draft', step: 's12' },
+  { id: 'u12', lane: 'user', y: 1570, t: 'Reviews the PR', s: 'can overrule listed assumptions', step: 's12' },
+  { id: 's13', lane: 'orch', y: 1670, t: '13 · Watch CI', s: 'skipped when the repo has no CI', step: 's13' },
+  { id: 'a13', lane: 'agent', y: 1670, t: 'Review-fix agent', s: 'failing check, up to 3 rounds', step: 's13' },
   { id: 's14', lane: 'orch', y: 1770, t: '14 · Follow-ups', s: 'ask once, file what is picked', step: 's14' },
   { id: 'u14', lane: 'user', y: 1770, t: 'Picks follow-ups', s: 'chooses which become issues', step: 's14' },
   { id: 'end', lane: 'orch', y: 1856, t: 'Done', shape: 'pill', step: 's14' },
@@ -418,7 +419,7 @@ down('s3', 'd3'); down('d3', 's4', 'all seams done');
 down('s4', 's5'); down('s5', 's6', 'green'); down('s6', 's7', 'same turn');
 down('s7', 'd8', 'both reported'); down('d8', 's8', 'findings or counterexamples');
 down('s8', 's8b'); down('s8b', 's9', 'clean'); down('s9', 's10'); down('s10', 's11', 'green');
-down('s11', 's12'); down('s12', 's13', 'checks pass'); down('s13', 's14'); down('s14', 'end');
+down('s11', 's12'); down('s12', 's13'); down('s13', 's14', 'checks pass'); down('s14', 'end');
 
 pair('s1', 'brief', 'report, 35 lines');
 pair('s3', 'brief', 'status report');
@@ -430,12 +431,12 @@ pair('s8', 'all findings', 'status report');
 pair('s8b', 'confirming brief', 'result');
 pair('s9', 'on conflict', 'rebased', true);
 pair('s10', 'brief', 'status report');
-pair('s12', 'check fails', 'push, watch again', true);
-pair('s13', 'brief', 'verdict');
+pair('s11', 'brief', 'verdict');
+pair('s13', 'check fails', 'push, watch again', true);
 label(770, 720, 'run together, fixed in one pass', 'middle');
 
 ask('s2', 'asks', 'confirms');
-ask('s11', 'Pull Request');
+ask('s12', 'Pull Request');
 ask('s14', 'asks once', 'picks');
 
 // seam loop: done or partial goes back up to the dispatch
