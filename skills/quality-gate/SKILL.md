@@ -19,6 +19,7 @@ For each language below, match if either its marker file exists at the repo root
 
 - **Dart / Flutter**: `pubspec.yaml`, `*.dart` → [dart-template.md](./dart-template.md)
 - **Go**: `go.mod`, `*.go` → [go-template.md](./go-template.md)
+- **Python**: `pyproject.toml`, `setup.py`, `setup.cfg`, `requirements.txt`, `*.py` → [python-template.md](./python-template.md)
 - **Swift**: `Package.swift`, `*.xcodeproj`, `*.xcworkspace`, `*.swift` → [swift-template.md](./swift-template.md)
 - **TypeScript**: `tsconfig.json`, `*.ts`, `*.tsx` → [typescript-template.md](./typescript-template.md)
 

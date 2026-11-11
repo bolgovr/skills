@@ -2,6 +2,12 @@
 
 Reference for the sub-agent that implements one confirmed seam. Every section applies on every cycle: consult them before and during the loop, not after.
 
+This file holds what every seam shares. Your brief names your seam's kind and mode; read the matching file next to this one as well, and only that one:
+
+- `unit` seam: `unit.md` (isolation, edges, mocking).
+- `integration` seam: `integration.md`.
+- `characterize` mode, either kind: `characterization.md` too.
+
 Read `CONTEXT.md` (if it exists) so test names and interface vocabulary match the project's domain language, and respect ADRs in the area you're touching.
 
 Follow SOLID for every class or interface you write or touch: single responsibility, open for extension, substitutable subtypes, segregated interfaces, dependency on abstractions. Check new code against it before moving to the next cycle, not as a pass at the end.
@@ -15,56 +21,20 @@ Every seam is exactly one of two kinds, named in your brief:
 - A **unit test** checks the behavior of one code unit: a module with a public interface (a function, a class, a package). The unit's own collaborators stay real; only the Frameworks and Drivers details are faked, so it runs entirely in memory.
 - An **integration test** enters the system as high on the abstraction layers as it can and runs down through the real stack to real infrastructure.
 
-## Unit tests
+## Principles for every test
 
-These principles hold in any language:
+These hold for both kinds, in any language:
 
 - **Test behavior, not implementation.** Assert on inputs → outputs and observable effects through the public interface, not on private methods, call counts or order, or internal state. Don't verify through a side channel (querying the database instead of using the interface). Refactors shouldn't break tests.
 - **One reason to fail per test.** Each test checks one behavior, and its name states WHAT that behavior is, not HOW it's achieved (`returns_empty_when_no_items`). Multiple asserts are fine if they describe one outcome.
-- **Deterministic and isolated.** No shared mutable state, no wall-clock time, no randomness, no network, filesystem, or database. Inject clocks, IDs, and I/O boundaries.
-- **Fast.** Milliseconds per test, so the suite can run on every save. If a `unit` seam can only be tested against real I/O, its kind is wrong or a fake adapter is missing: stop and report `needs-decision`.
+- **Deterministic.** No wall-clock time, no randomness, no shared mutable state. Inject clocks, IDs, and randomness as dependencies; don't mock them globally.
 - **Arrange, Act, Assert.** Setup, one action, assertions. No logic (loops, conditionals) in the test body.
-- **Test the edges, not just the happy path.** Within this seam's behavior, cover empty, null/none, boundaries, max sizes, invalid input, and error paths. Dynamic languages need explicit type-misuse cases here; static ones get those from the compiler.
+- **Every branch has a test, not just every line.** Line coverage can't see an `if` with no `else`, a `switch` with no default, or which operand of an `&&`/`||` decided the outcome. For each one your seam adds, write the case where the condition is false and the case for each operand. These are the first inputs the adversary tries later, so a gap here costs a whole fix round.
 - **Readable over DRY.** Duplication in tests is acceptable; a test should be understood without jumping around. Use builders and fixtures for setup, not for assertions.
 - **Failure messages should diagnose.** Use the assertion library's semantic matchers so a failure shows expected vs. actual, not just `false`.
 - **Tests are first-class code.** They're held to the same standard as production code. Refactoring them and deleting obsolete ones belongs to the review stage; in the loop, touch only the tests you are writing and the existing tests the plan assigns to your seam.
-- **Property-based and table-driven where it fits.** Parameterize over cases with the framework's own feature (`it.each`, `@pytest.mark.parametrize`, Go subtests) instead of copy-pasting or looping in the test body. A table-driven test is one behavior, and each new row is its own red-green cycle. Use property-based tests for invariants (idempotence, round-trips, commutativity) only if the project already has a library for them; otherwise report `needs-decision` rather than adding the dependency.
+- **Table-driven where it fits.** Parameterize over cases with the framework's own feature (`it.each`, `@pytest.mark.parametrize`, Go subtests) instead of copy-pasting or looping in the test body. A table-driven test is one behavior, and each new row is its own red-green cycle.
 - **Every changed line is covered, with no percentage target.** High coverage proves nothing about assertion quality, so aim for every behavior of the seam, including its edges, to have a test. But an uncovered new or changed line means a red-green cycle slipped, and the quality gate blocks on it. Unit and integration tests both count. A line may stay uncovered only through an exclusion written in the code, with a reason, in the syntax the gate names for the language; a platform call with no fake isn't a reason, it's a missing fake adapter (`needs-decision`).
-
-## Mocking
-
-In unit tests, mock at the Frameworks and Drivers boundary: the concrete "detail" behind an interface a Use Case or Entity owns, never the business rule itself.
-- External APIs (payment, email, etc.)
-- Databases
-- File system (sometimes)
-
-Fake external services, not your own collaborators: over-mocking couples tests to structure and hides real bugs. Clocks, IDs, and randomness are injected as dependencies, not mocked globally.
-
-Never mock a Use Case, an Entity, or the Interface Adapter between them (Controller, Presenter, Use Case Output): those are the layers the test exists to verify.
-
-## Integration tests
-
-An integration test proves the layers agree with each other and with the infrastructure under them.
-
-- **Enter at the top.** Drive the outermost entry point the feature has: the HTTP endpoint, CLI command, message handler, or Controller. If the top can't be driven in a test (no test client for the framework, say), enter one layer lower and say why in the test.
-- **Everything you own is real.** Wiring, Use Cases, Entities, and adapters all run for real, against real infrastructure that can run locally (a database, a temp directory). Only third-party services that can't run locally are replaced, with a local stub.
-- **Cover the critical paths, not the edges.** The feature's happy path plus the failures that cross layers: a validation rejection, a not-found, an infrastructure failure mapped to an API error. Don't repeat edge cases the unit tests already pin down. If an adapter behavior can't be reached from the top, report `needs-decision`; don't invent another kind of test.
-- **Slower, still isolated and deterministic.** Seconds per test are fine. Each test owns its data (a temp directory, a transaction rolled back, a unique schema), so no test sees another's leftovers. Clocks, IDs, and randomness are still injected.
-- **Keep the kinds apart.** Separate integration tests from unit tests the way the project already does (directory, file suffix, tag, or run command). If it has no convention, report `needs-decision` with a proposal.
-- **Missing infrastructure is a blocker.** If what the test needs isn't available (no database, no container runtime), report `blocked` naming what's missing. Never fall back to fakes: that tests nothing about the integration.
-
-Every unit test principle not overridden here still applies.
-
-## Characterization
-
-A seam in `characterize` mode pins the current behaviour of existing code so a refactor can prove it preserved it. It is still a `unit` or `integration` seam, and every rule for its kind applies, except red before green:
-
-- **Green on first write.** The code already exists, so the test passes the moment it's written. If it fails, you've found a disagreement between the plan and the code: report `needs-decision`, don't change the code to match.
-- **Expected values come from observed behaviour.** Run the code, record what it does, and assert that, including behaviour that looks wrong. Fixing it is a separate, behaviour-changing seam, never part of a characterization.
-- **Frozen for the rest of the refactor.** No later seam edits or deletes a characterization test. If a later seam can't keep it green, that seam reports `needs-decision`.
-- **Pin the edges the refactor could move.** Cover the behaviour the planned restructuring touches, edges included; don't pin behaviour outside the plan's reach.
-
-A later seam may rewrite or delete an existing test only when the plan assigns that test to it, and may delete one only when the plan names the characterization seam that covers its behaviour.
 
 ## Seams: where tests go
 
@@ -72,7 +42,7 @@ A **seam** is the public boundary you test at: the interface where you observe b
 
 **Test only at the seam named in your brief, with the kind named there.** Both were confirmed with the user. If the work shows the seam is wrong, or a test needs a seam that wasn't agreed, stop and report `needs-decision`; don't invent a new one.
 
-A `unit` seam commonly falls at a layer boundary: Controller → Use Case, Use Case → Use Case Output, Use Case → Entity. See Mocking above for what to fake at those boundaries. An `integration` seam sits at the outermost entry point the feature has.
+A `unit` seam commonly falls at a layer boundary: Controller → Use Case, Use Case → Use Case Output, Use Case → Entity. What to fake at those boundaries is in `unit.md`. An `integration` seam sits at the outermost entry point the feature has.
 
 ## Anti-patterns
 
@@ -82,11 +52,11 @@ A `unit` seam commonly falls at a layer boundary: Controller → Use Case, Use C
 
 ## Rules of the loop
 
-- **Red before green.** Write the failing test first, then only enough code to pass it. Don't anticipate future tests or add speculative features. The one exception is a seam in `characterize` mode (see Characterization above).
+- **Red before green.** Write the failing test first, then only enough code to pass it. Don't anticipate future tests or add speculative features. The one exception is a seam in `characterize` mode (see `characterization.md`).
 - **One slice at a time.** One test, one minimal implementation per cycle.
 - **Refactoring is not part of the loop.** It belongs to the review stage (see the `code-review` skill), not the implementation cycle. When your seam comes from a refactoring plan, the restructuring the plan describes is the seam's implementation, not an extra; anything beyond it still waits for review.
 
-Run typechecking and only the test files in scope (the ones you touch, unit or integration) regularly. The full quality gate runs later in its own stage, and the full test suite runs exactly once, right before the PR opens, so don't run either here.
+Run typechecking and only the test files in scope (the ones you touch, unit or integration) regularly, with the commands the plan's Commands section lists. The full quality gate and the full test suite run later in their own stages, so don't run either here.
 
 Your last step before reporting `done`: call the Skill tool with "quality-gate" in coverage-only mode on your seam's files (source and tests). It runs only the coverage check, scoped to those files. Close each uncovered line it lists with a red-green cycle (a characterization test, in `characterize` mode) or, where no test can reach the line, an in-code exclusion with a reason. Rerun coverage-only mode until it passes.
 
