@@ -1,0 +1,478 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>/implement control flow map</title>
+<style>
+  :root {
+    --bg: #f6f6f3; --surface: #ffffff; --ink: #1b1d21; --muted: #636a74; --line: #d8dbe0; --band: #efefea;
+    --orch: #4350c4; --orch-tint: #eef0fd;
+    --agent: #0c7a6d; --agent-tint: #e4f4f1;
+    --user: #a85d08; --user-tint: #fcf1df;
+    --loop: #c2410c;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #141619; --surface: #1d2025; --ink: #e7e9ec; --muted: #9aa1ab; --line: #353a42; --band: #191c20;
+      --orch: #98a3ff; --orch-tint: #23274b;
+      --agent: #52d0bf; --agent-tint: #14322e;
+      --user: #f0b35a; --user-tint: #3a2c13;
+      --loop: #ff8f63;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 1300px; margin: 0 auto; padding: 40px 24px 80px; }
+  h1 { font-size: 28px; line-height: 1.2; margin: 0 0 8px; letter-spacing: -0.01em; }
+  h2 { font-size: 19px; margin: 56px 0 12px; }
+  h3 { font-size: 15px; margin: 0 0 6px; }
+  p { margin: 0 0 12px; max-width: 72ch; }
+  code { font: 0.88em ui-monospace, SFMono-Regular, Menlo, monospace; background: var(--band); border: 1px solid var(--line); border-radius: 4px; padding: 0 4px; }
+  .lede { color: var(--muted); font-size: 16px; }
+  .actors { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; margin: 24px 0 8px; }
+  .actor { background: var(--surface); border: 1px solid var(--line); border-top: 3px solid var(--c); border-radius: 8px; padding: 12px 14px; }
+  .actor b { color: var(--c); }
+  .actor p { margin: 4px 0 0; color: var(--muted); font-size: 14px; }
+  .c-user { --c: var(--user); } .c-orch { --c: var(--orch); } .c-agent { --c: var(--agent); }
+
+  .map { display: grid; grid-template-columns: minmax(0, 1fr) 350px; gap: 24px; align-items: start; margin-top: 16px; }
+  @media (max-width: 1080px) { .map { grid-template-columns: 1fr; } .panel { position: static !important; max-height: none !important; } }
+  .canvas { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; overflow-x: auto; }
+  .canvas svg { display: block; width: 100%; min-width: 760px; height: auto; }
+  .panel { position: sticky; top: 16px; max-height: calc(100vh - 32px); overflow-y: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px 18px 8px; }
+  .panel .who { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+  .panel h3 { font-size: 18px; margin: 2px 0 8px; }
+  .panel ul, .ref ul { margin: 0 0 12px; padding-left: 18px; }
+  .panel li, .ref li { margin-bottom: 5px; }
+  .panel h4, .ref h4 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--loop); margin: 14px 0 6px; }
+  .hint { color: var(--muted); font-size: 13px; }
+
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 20px; margin: 20px 0 0; font-size: 13px; color: var(--muted); }
+  .legend span { display: inline-flex; align-items: center; gap: 7px; }
+  .legend svg { flex: none; }
+
+  /* diagram */
+  .band { fill: var(--band); }
+  .lane-line { stroke: var(--line); stroke-dasharray: 2 5; }
+  .lane-head { font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
+  .phase { font-size: 10.5px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; fill: var(--muted); }
+  .node { cursor: pointer; outline: none; }
+  .node .shape { stroke-width: 1.5; }
+  .node.user .shape { fill: var(--user-tint); stroke: var(--user); }
+  .node.orch .shape { fill: var(--orch-tint); stroke: var(--orch); }
+  .node.agent .shape { fill: var(--agent-tint); stroke: var(--agent); }
+  .node:hover .shape, .node:focus-visible .shape { stroke-width: 2.5; }
+  .node.sel .shape { stroke-width: 3; }
+  .node .t { font-size: 13px; font-weight: 650; fill: var(--ink); }
+  .node .s { font-size: 10.5px; fill: var(--muted); }
+  .par { fill: var(--agent-tint); stroke: var(--agent); stroke-dasharray: 4 4; opacity: 0.55; }
+  .edge { fill: none; stroke-width: 1.5; }
+  .edge.flow { stroke: var(--ink); }
+  .edge.call { stroke: var(--agent); }
+  .edge.ask { stroke: var(--user); }
+  .edge.loop { stroke: var(--loop); }
+  .edge.esc { stroke: var(--user); stroke-dasharray: 5 4; }
+  .edge.cond { stroke-dasharray: 5 4; }
+  .m-flow { fill: var(--ink); } .m-call { fill: var(--agent); } .m-ask, .m-esc { fill: var(--user); } .m-loop { fill: var(--loop); }
+  .lbl { font-size: 10.5px; fill: var(--muted); paint-order: stroke; stroke: var(--surface); stroke-width: 3px; stroke-linejoin: round; }
+  .lbl.loop { fill: var(--loop); font-weight: 600; }
+  .lbl.esc { fill: var(--user); font-weight: 600; }
+
+  /* reference */
+  .ref { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 12px; }
+  .ref article { background: var(--surface); border: 1px solid var(--line); border-left: 3px solid var(--c, var(--orch)); border-radius: 8px; padding: 14px 16px 6px; font-size: 14px; }
+  .ref .who { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+  .tablewrap { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; }
+  table { border-collapse: collapse; width: 100%; font-size: 14px; }
+  th, td { text-align: left; padding: 9px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  tr:last-child td { border-bottom: 0; }
+  th { font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); white-space: nowrap; }
+  td.c { text-align: center; } th.c { text-align: center; }
+  .yes { color: var(--agent); font-weight: 700; }
+  .no { color: var(--line); }
+  .two { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 24px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>/implement control flow map</h1>
+  <p class="lede">How the <code>implement</code> skill moves from a spec or a set of tickets to a merged-ready Pull Request: who acts at each step, where the flow branches or loops, and what bounds each loop. Source: <code>skills/implement/SKILL.md</code> and its <code>references/</code>.</p>
+
+  <div class="actors">
+    <div class="actor c-user"><b>User</b><p>Starts the session, confirms seams, answers the questions that are theirs to decide, reviews the PR, picks follow-ups.</p></div>
+    <div class="actor c-orch"><b>Orchestrator</b><p>The session that ran the skill. Plans, talks to the user, dispatches sub-agents, reads their reports. Never edits source or runs tests.</p></div>
+    <div class="actor c-agent"><b>Sub-agents</b><p>Do everything that reads widely or prints a lot. One writer at a time in the shared worktree. Each reads the plan file first and replies with a short report.</p></div>
+  </div>
+
+  <h2>The map</h2>
+  <p class="hint">Select any box to see what happens there. The flow runs top to bottom; after every dispatch the orchestrator ends its turn and the sub-agent's report re-invokes it.</p>
+  <div class="map">
+    <div class="canvas"><svg id="flow" role="img" aria-label="Control flow of the implement skill across three lanes: user, orchestrator, sub-agents"></svg></div>
+    <aside class="panel" id="panel" aria-live="polite"></aside>
+  </div>
+  <div class="legend">
+    <span><svg width="34" height="10"><line x1="0" y1="5" x2="26" y2="5" class="edge flow"/><path d="M26,1 L34,5 L26,9z" class="m-flow"/></svg>Main flow</span>
+    <span><svg width="34" height="10"><line x1="0" y1="5" x2="26" y2="5" class="edge call"/><path d="M26,1 L34,5 L26,9z" class="m-call"/></svg>Dispatch and report</span>
+    <span><svg width="34" height="10"><line x1="0" y1="5" x2="26" y2="5" class="edge call cond"/><path d="M26,1 L34,5 L26,9z" class="m-call"/></svg>Conditional dispatch</span>
+    <span><svg width="34" height="10"><line x1="0" y1="5" x2="26" y2="5" class="edge loop"/><path d="M26,1 L34,5 L26,9z" class="m-loop"/></svg>Loop or skip</span>
+    <span><svg width="34" height="10"><line x1="0" y1="5" x2="26" y2="5" class="edge ask"/><path d="M26,1 L34,5 L26,9z" class="m-ask"/></svg>Planned question to the user</span>
+    <span><svg width="34" height="10"><line x1="0" y1="5" x2="26" y2="5" class="edge esc"/><path d="M26,1 L34,5 L26,9z" class="m-esc"/></svg>Escalation to the user</span>
+  </div>
+
+  <h2>Step reference</h2>
+  <div class="ref" id="ref"></div>
+
+  <h2>The report protocol</h2>
+  <p>Every sub-agent except the explore agent and the adversary replies with the same report of at most 15 lines. Its <code>status</code> line is what the orchestrator branches on.</p>
+  <div class="tablewrap"><table>
+    <tr><th>Status</th><th>Meaning</th><th>What the orchestrator does next</th></tr>
+    <tr><td><code>done</code></td><td>Work is green and committed.</td><td>Moves to the next seam, or the next step.</td></tr>
+    <tr><td><code>partial</code></td><td>A seam agent stopped at a green checkpoint after about 40 turns, to keep its context small.</td><td>Dispatches a fresh seam agent for the same seam. The plan's seam line says what is left.</td></tr>
+    <tr><td><code>needs-decision</code></td><td>The work would change a confirmed seam or a public interface, add a dependency, or hit a disputed reading of the spec.</td><td>Puts the question to the user, records the answer under Decisions, then resumes the same agent with SendMessage, or dispatches a fresh one if it is gone.</td></tr>
+    <tr><td><code>blocked</code></td><td>The agent cannot go on: missing infrastructure, or still red after its allowed rounds.</td><td>Decides the next step with the user. Never starts the next seam on top of a broken one.</td></tr>
+  </table></div>
+
+  <h2>Which checks run where</h2>
+  <p>The whole quality gate runs twice and the full test suite exactly once. Everything in between runs only the tests in scope, so no agent pays for the full suite on a branch that is still changing.</p>
+  <div class="tablewrap"><table>
+    <tr><th>Check</th><th class="c">3 Seam</th><th class="c">5 Gate</th><th class="c">6 Adversary</th><th class="c">8 Fix</th><th class="c">9 Sync</th><th class="c">10 Final</th><th class="c">12 CI fix</th></tr>
+    <tr><td>Tests in scope</td><td class="c yes">●</td><td class="c yes">●</td><td class="c yes">own tests</td><td class="c yes">●</td><td class="c yes">●</td><td class="c yes">●</td><td class="c yes">●</td></tr>
+    <tr><td>Typecheck</td><td class="c yes">●</td><td class="c yes">●</td><td class="c no">·</td><td class="c yes">●</td><td class="c yes">●</td><td class="c yes">●</td><td class="c yes">●</td></tr>
+    <tr><td>Lint on touched files</td><td class="c no">·</td><td class="c yes">●</td><td class="c no">·</td><td class="c yes">●</td><td class="c yes">●</td><td class="c yes">●</td><td class="c yes">●</td></tr>
+    <tr><td>Coverage of changed lines</td><td class="c yes">seam files</td><td class="c yes">●</td><td class="c no">·</td><td class="c no">·</td><td class="c no">·</td><td class="c yes">●</td><td class="c no">·</td></tr>
+    <tr><td>Whole quality gate</td><td class="c no">·</td><td class="c yes">●</td><td class="c no">·</td><td class="c no">·</td><td class="c no">·</td><td class="c yes">●</td><td class="c no">·</td></tr>
+    <tr><td>Full test suite</td><td class="c no">·</td><td class="c no">·</td><td class="c no">·</td><td class="c no">·</td><td class="c no">·</td><td class="c yes">once</td><td class="c no">·</td></tr>
+  </table></div>
+
+  <h2>Loops and their bounds</h2>
+  <div class="tablewrap"><table>
+    <tr><th>Loop</th><th>Where</th><th>Bound</th><th>When the bound is hit</th></tr>
+    <tr><td>Seam after seam</td><td>Step 3</td><td>One agent per confirmed seam, in plan order</td><td>All seams <code>done</code>: go to step 4</td></tr>
+    <tr><td>Red-green cycles in a seam</td><td>Inside a seam agent</td><td>About 40 turns per agent; a seam is sized at about 10 cycles</td><td>Commit at the next green cycle, report <code>partial</code>, a fresh agent continues</td></tr>
+    <tr><td>Coverage-only gate</td><td>End of a seam</td><td>Until every changed line is covered or excluded with a reason</td><td>Seam reports <code>done</code></td></tr>
+    <tr><td>Gate fix and rerun</td><td>Steps 5 and 10</td><td>3 rounds</td><td>Report <code>blocked</code> with the remaining failures</td></tr>
+    <tr><td>Fix and confirm</td><td>Steps 6 and 8</td><td>3 rounds</td><td>Decide the next step with the user, as for <code>blocked</code></td></tr>
+    <tr><td>CI fix and rewatch</td><td>Step 12</td><td>3 rounds</td><td>Stop and report to the user</td></tr>
+  </table></div>
+
+  <h2>State and guards</h2>
+  <div class="two">
+    <div>
+      <h3>The plan file is the session's memory</h3>
+      <p><code>.implement/plan.md</code> is the durable state and the first thing every sub-agent reads (the adversary never sees it). After a context compaction the orchestrator re-reads it instead of asking anyone again. It is excluded from commits through <code>info/exclude</code>.</p>
+      <div class="tablewrap"><table>
+        <tr><th>Section</th><th>Holds</th><th>Written by</th></tr>
+        <tr><td>Spec</td><td>Tickets or spec path</td><td>Orchestrator</td></tr>
+        <tr><td>Commands</td><td>Exact test, typecheck, lint, full suite commands; what CI pins</td><td>Orchestrator from the explore report; any agent corrects a wrong line</td></tr>
+        <tr><td>Map</td><td>At most 10 lines of paths to touch or imitate</td><td>Orchestrator from the explore report</td></tr>
+        <tr><td>Seams</td><td>Kind, mode, assigned tests, status</td><td>Orchestrator; the working agent sets the status</td></tr>
+        <tr><td>Decisions</td><td>User answers, assumptions marked <code>assumed</code>, choices later agents must honour</td><td>Orchestrator and agents, one line each</td></tr>
+      </table></div>
+    </div>
+    <div>
+      <h3>Guards that hold for the whole session</h3>
+      <ul>
+        <li><b>Commit guard.</b> A PreToolUse hook on Bash (<code>scripts/block-commit-on-main.sh</code>) blocks <code>git commit</code> and <code>git push</code> on <code>main</code> or <code>master</code>, and any push that targets either. If the script cannot be found it fails closed. Sub-agents may not inherit the hook, so each brief has them check the branch before every commit.</li>
+        <li><b>Only the orchestrator pushes.</b> Sub-agents commit once green and never push.</li>
+        <li><b>Worktree shell rules.</b> Heredocs, command substitution, shell variables, and loops are refused. Files are written with the Write and Edit tools; <code>&amp;&amp;</code> and pipes are fine.</li>
+        <li><b>Tests only at confirmed seams.</b> An agent that finds a seam is wrong stops with <code>needs-decision</code>; it does not invent one.</li>
+        <li><b>Ask early, ask together.</b> Questions that are the user's (seams, scope, public interface, new dependency, an ambiguous spec line) are collected before the first seam. Everything else the orchestrator decides, records as <code>assumed</code>, and lists in the PR.</li>
+        <li><b>Independent adversary.</b> It gets its own brief with only the spec, the diff, and the existing tests, so it cannot inherit the builder's reasoning.</li>
+      </ul>
+      <h3>Without a sub-agent tool</h3>
+      <p>The same flow runs inline, in the same order, with the same plan file, and each role line becomes the checklist for its step. The adversary and the review can no longer run together: the review runs after the adversary, both are fixed in step 8, and the adversary's result is flagged as not independent.</p>
+    </div>
+  </div>
+</main>
+
+<script>
+const STEPS = [
+  { id: 'setup', n: '0', title: 'Set up', who: 'Orchestrator', c: 'orch',
+    points: [
+      'Work in a git worktree. Already in a linked worktree: stay. Otherwise call EnterWorktree. If that tool is missing, stop and ask the user to relaunch with <code>claude --worktree</code>.',
+      'Branch off a fresh default branch: <code>git fetch &amp;&amp; git switch -c &lt;type&gt;/&lt;issue&gt;-&lt;slug&gt; origin/&lt;default&gt;</code>.',
+      'Write <code>.implement/plan.md</code> and add <code>.implement/</code> to the file <code>git rev-parse --git-path info/exclude</code> prints.',
+      'From here on the commit guard hook blocks commits and pushes on <code>main</code> or <code>master</code>.' ] },
+  { id: 's1', n: '1', title: 'Explore', who: 'Orchestrator dispatches an Explore agent', c: 'agent',
+    points: [
+      'The explore agent is read-only. It reads <code>CONTEXT.md</code> and the ADRs in the area, finds the code the spec touches, and proposes candidate seams.',
+      'It replies in at most 35 lines with four lists: <code>commands</code>, <code>map</code>, <code>seams</code>, <code>questions</code>.',
+      'The orchestrator writes Commands, Map, and the seams into the plan file.' ],
+    branches: [ 'Spec already lists seams (a refactoring plan): copy them into the plan, and have the explore agent check them against the code and report mismatches.' ] },
+  { id: 's2', n: '2', title: 'Confirm seams with the user', who: 'Orchestrator and user', c: 'user',
+    points: [
+      'Asks: what is the public interface, which seams should we test, and is each a <code>unit</code> or an <code>integration</code> seam?',
+      'Default proposal: one <code>integration</code> seam per user-facing entry point, after the <code>unit</code> seams it depends on. A refactoring plan puts its characterization seams first.',
+      'Seams are sized as one agent\'s worth of work: split one that needs more than about ten red-green cycles, merge two small ones on the same file.',
+      'The open questions the explore agent found are asked in this same round. Answers go under Decisions.' ],
+    branches: [ 'Gate: no seam agent starts before its seam is confirmed.' ] },
+  { id: 's3', n: '3', title: 'Implement one seam at a time', who: 'Orchestrator dispatches a seam agent per seam', c: 'agent',
+    points: [
+      'Seams run in sequence, in plan order, because later ones build on earlier ones.',
+      'The seam agent loads the architecture-principles skill, reads <code>tdd.md</code> plus the file for its kind (<code>unit.md</code> or <code>integration.md</code>, and <code>characterization.md</code> in <code>characterize</code> mode), then works in red-green cycles, one vertical slice at a time.',
+      'It runs only the tests in scope plus typechecking, and keeps the seam status in the plan current.',
+      'Before reporting <code>done</code> it runs the quality gate in coverage-only mode on the seam\'s files and closes every uncovered line.' ],
+    branches: [
+      '<code>done</code>: next seam; after the last one, step 4.',
+      '<code>partial</code> (about 40 turns used): a fresh agent takes the same seam.',
+      '<code>needs-decision</code>: ask the user, record the answer, resume the same agent.',
+      '<code>blocked</code>: decide the next step with the user. Do not start the next seam.' ] },
+  { id: 's4', n: '4', title: 'Observability', who: 'Orchestrator dispatches an observable agent', c: 'agent',
+    points: [ 'The agent calls the observable skill and applies it to the branch\'s changes since <code>origin/&lt;default&gt;</code>: structured logging that gives evidence the feature works in production.' ] },
+  { id: 's5', n: '5', title: 'Quality gate', who: 'Orchestrator dispatches a gate agent', c: 'agent',
+    points: [
+      'The agent calls the quality-gate skill, scoped to the branch\'s changes: build, lint, typecheck, tests, coverage, architecture checks.',
+      'The gate\'s own adversary step reports <code>not run (caller dispatches it)</code>, which is expected.',
+      'This is the first of two whole-gate runs. It exists so the adversary attacks a green change.' ],
+    branches: [ 'Red: fix and rerun, at most 3 rounds. Still red: <code>blocked</code>, with one line per remaining failure.' ] },
+  { id: 's6', n: '6', title: 'Adversary', who: 'Orchestrator dispatches an adversary agent', c: 'agent',
+    points: [
+      'It gets the Adversary brief, not the standard one: only the spec, the diff, and the existing tests. It never sees the plan file or the seam reports.',
+      'It works the whole attack list and proves every break with a failing test, which it commits. Those tests stay in the suite as regression tests.',
+      'The orchestrator does not wait: step 7 starts in the same turn.' ],
+    branches: [
+      'Counterexamples: they go to the review-fix agent in step 8.',
+      '<code>needs-decision</code> (a dispute over the spec\'s reading): the user decides. The answer keeps the test, or the adversary rewrites it. Step 8 is not passed while a dispute is open.',
+      'User rules a counterexample out of scope: the adversary removes that test and it goes on the follow-up list.' ] },
+  { id: 's7', n: '7', title: 'Review', who: 'Orchestrator calls the code-review skill', c: 'orch',
+    points: [
+      'The orchestrator calls the skill itself, with <code>origin/&lt;default&gt;</code> as the fixed point, while the adversary runs.',
+      'The skill runs its own sub-agents along two axes: Standards and Spec.',
+      'The adversary only adds tests and the reviewers only read, so the two are safe together. A reviewer may see a failing counterexample test land mid-review; that is expected.' ] },
+  { id: 'd8', n: '', title: 'Join: anything found?', who: 'Orchestrator', c: 'orch',
+    points: [ 'Waits until the adversary and the review have both reported and no dispute is open.' ],
+    branches: [
+      'Counterexamples or review findings: step 8, all of them in one pass.',
+      'Neither produced anything: skip step 8 and go to step 9.' ] },
+  { id: 's8', n: '8', title: 'Fix', who: 'Orchestrator dispatches one review-fix agent', c: 'agent',
+    points: [
+      'One agent gets all counterexamples and review findings together and fixes each test-first.',
+      'For a counterexample it names the root cause first, looks for other inputs that fail for the same cause, adds a test for each, and fixes the cause in production code.',
+      'It never deletes or weakens a counterexample test.',
+      'It runs the tests in scope plus lint and typecheck on the files it touched. It does not rerun the quality gate.' ],
+    branches: [ 'It escalates the same way seam agents do: <code>needs-decision</code> or <code>blocked</code> go to the user.' ] },
+  { id: 's8b', n: '', title: 'Confirm fixes with the adversary', who: 'Orchestrator dispatches the adversary again', c: 'agent',
+    points: [
+      'Only when there were counterexamples.',
+      'The confirming brief names the commit the fixes started from and the earlier counterexample tests. The adversary reruns those, then attacks only what the fixes changed and inputs that fail for the same cause.' ],
+    branches: [
+      'Clean: step 9.',
+      'New counterexamples: fix and confirm again, at most 3 rounds.',
+      'Counterexamples remain after 3 rounds: decide the next step with the user, as for <code>blocked</code>.' ] },
+  { id: 's9', n: '9', title: 'Sync with the default branch', who: 'Orchestrator', c: 'orch',
+    points: [ 'Runs <code>git fetch</code> and <code>git log --oneline HEAD..origin/&lt;default&gt;</code>.' ],
+    branches: [
+      'Nothing listed: move on.',
+      'Behind: the orchestrator runs <code>git rebase origin/&lt;default&gt;</code> itself. A clean rebase needs no agent, since step 10 verifies the result.',
+      'Conflict: <code>git rebase --abort</code>, then dispatch a sync agent. It resolves conflicts so both sides\' intent survives, and runs the tests in scope plus lint and typecheck on the files that conflicted. A conflict that needs a design call is a <code>needs-decision</code>.' ] },
+  { id: 's10', n: '10', title: 'Final gate', who: 'Orchestrator dispatches a final agent', c: 'agent',
+    points: [
+      'The agent calls the quality-gate skill on the finished branch, skipping its adversary step.',
+      'It makes sure the full test suite runs exactly once. This is the only step that runs it.' ],
+    branches: [ 'Red: fix, then rerun only the failing checks and the tests in scope for the fix, at most 3 rounds. Still red: <code>blocked</code>.' ] },
+  { id: 's11', n: '11', title: 'Ship', who: 'Orchestrator', c: 'orch',
+    points: [
+      'Checks <code>git status</code> is clean and skims <code>git log --oneline origin/&lt;default&gt;..HEAD</code>.',
+      'Pushes the feature branch and opens a Pull Request against the default branch.',
+      'The PR body lists every Decision marked <code>assumed</code> under "Assumptions", so the reviewer can overrule any of them for the price of a comment.' ] },
+  { id: 's12', n: '12', title: 'Watch CI', who: 'Orchestrator', c: 'orch',
+    points: [ 'Waits for the PR\'s checks, for example <code>gh pr checks &lt;number&gt; --watch</code> as a background command.' ],
+    branches: [
+      'Green: step 13.',
+      'A check fails: dispatch a review-fix agent with the check\'s name and run id, push its commit, and watch again, at most 3 rounds.',
+      'The failure came from a local command that differs from CI\'s: the agent corrects the plan\'s Commands line too.',
+      'No CI in the repo: skip this step.' ] },
+  { id: 's13', n: '13', title: 'Follow-ups', who: 'Orchestrator and user', c: 'user',
+    points: [
+      'Lists what the session deferred: review findings the user chose not to fix, the adversary\'s suspicions, counterexamples ruled out of scope, and bugs agents noticed outside the change.',
+      'Asks the user once whether to file them as issues, and files the ones they pick.' ] },
+];
+const BY_ID = Object.fromEntries(STEPS.map(s => [s.id, s]));
+
+function stepHtml(s) {
+  let h = '<div class="who">' + s.who + '</div><h3>' + (s.n ? s.n + '. ' : '') + s.title + '</h3><ul>' +
+    s.points.map(p => '<li>' + p + '</li>').join('') + '</ul>';
+  if (s.branches) h += '<h4>Branches and bounds</h4><ul>' + s.branches.map(p => '<li>' + p + '</li>').join('') + '</ul>';
+  return h;
+}
+document.getElementById('ref').innerHTML = STEPS.map(s => '<article style="--c: var(--' + s.c + ')">' + stepHtml(s) + '</article>').join('');
+
+// ---------- diagram ----------
+const NS = 'http://www.w3.org/2000/svg';
+const svg = document.getElementById('flow');
+const VW = 900, VH = 1800;
+svg.setAttribute('viewBox', '0 0 ' + VW + ' ' + VH);
+const X = { user: 160, orch: 450, agent: 770 };
+const HW = 100, HH = 27, DH = 32;
+
+function el(name, attrs, text) {
+  const e = document.createElementNS(NS, name);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  if (text != null) e.textContent = text;
+  return e;
+}
+const add = (parent, name, attrs, text) => parent.appendChild(el(name, attrs, text));
+
+// markers
+const defs = add(svg, 'defs', {});
+for (const k of ['flow', 'call', 'ask', 'loop', 'esc']) {
+  const m = add(defs, 'marker', { id: 'm-' + k, markerWidth: 9, markerHeight: 8, refX: 8.5, refY: 4, orient: 'auto-start-reverse', markerUnits: 'userSpaceOnUse' });
+  add(m, 'path', { d: 'M0,0 L9,4 L0,8 z', class: 'm-' + k });
+}
+
+// phases (alternating bands) and lanes
+const PHASES = [['Set up', 34, 120], ['Plan', 120, 320], ['Build', 320, 520], ['Harden', 520, 720], ['Attack and review', 720, 1215], ['Land', 1215, VH]];
+PHASES.forEach(([name, y0, y1], i) => {
+  if (i % 2 === 0) add(svg, 'rect', { x: 0, y: y0, width: VW, height: y1 - y0, class: 'band' });
+  add(svg, 'text', { class: 'phase', transform: 'translate(18 ' + (y0 + 14) + ') rotate(90)' }, name);
+});
+[[305, 'x'], [610, 'x']].forEach(([x]) => add(svg, 'line', { x1: x, y1: 34, x2: x, y2: VH, class: 'lane-line' }));
+[['user', 'User'], ['orch', 'Orchestrator'], ['agent', 'Sub-agents']].forEach(([k, name]) =>
+  add(svg, 'text', { x: X[k], y: 22, 'text-anchor': 'middle', class: 'lane-head', fill: 'var(--' + k + ')' }, name));
+
+const NODES = [
+  { id: 'start', lane: 'user', y: 76, t: '/implement', s: 'a spec or a set of tickets', shape: 'pill', step: 'setup' },
+  { id: 'setup', lane: 'orch', y: 76, t: 'Set up', s: 'worktree, branch, plan file', step: 'setup' },
+  { id: 's1', lane: 'orch', y: 170, t: '1 · Explore', s: 'result goes into the plan file', step: 's1' },
+  { id: 'a1', lane: 'agent', y: 170, t: 'Explore agent', s: 'read-only: commands, map, seams', step: 's1' },
+  { id: 's2', lane: 'orch', y: 270, t: '2 · Confirm seams', s: 'and open questions, in one round', step: 's2' },
+  { id: 'u2', lane: 'user', y: 270, t: 'Confirms seams', s: 'kind, order, scope, answers', step: 's2' },
+  { id: 's3', lane: 'orch', y: 370, t: '3 · Dispatch seam agent', s: 'one at a time, in plan order', step: 's3' },
+  { id: 'a3', lane: 'agent', y: 370, t: 'Seam agent', s: 'red-green, then coverage check', step: 's3' },
+  { id: 'd3', lane: 'orch', y: 470, t: 'Report status?', shape: 'diamond', step: 's3' },
+  { id: 'u3', lane: 'user', y: 470, t: 'Answers or decides', s: 'question, or what to do when stuck', step: 's3' },
+  { id: 's4', lane: 'orch', y: 570, t: '4 · Observability', s: 'logging for the changed code', step: 's4' },
+  { id: 'a4', lane: 'agent', y: 570, t: 'Observable agent', s: 'applies the observable skill', step: 's4' },
+  { id: 's5', lane: 'orch', y: 670, t: '5 · Quality gate', s: 'first whole-gate run', step: 's5' },
+  { id: 'a5', lane: 'agent', y: 670, t: 'Gate agent', s: 'fix and rerun, up to 3 rounds', step: 's5' },
+  { id: 's6', lane: 'orch', y: 772, t: '6 · Adversary', s: 'dispatch, do not wait', step: 's6' },
+  { id: 'a6', lane: 'agent', y: 772, t: 'Adversary agent', s: 'sees only spec, diff, tests', step: 's6' },
+  { id: 's7', lane: 'orch', y: 862, t: '7 · Review', s: 'code-review skill, same turn', step: 's7' },
+  { id: 'a7', lane: 'agent', y: 862, t: 'Review sub-agents', s: 'Standards and Spec, read-only', step: 's7' },
+  { id: 'd8', lane: 'orch', y: 962, t: 'Anything found?', shape: 'diamond', step: 'd8' },
+  { id: 's8', lane: 'orch', y: 1062, t: '8 · Fix', s: 'one agent, all findings at once', step: 's8' },
+  { id: 'a8', lane: 'agent', y: 1062, t: 'Review-fix agent', s: 'root cause first, test-first', step: 's8' },
+  { id: 's8b', lane: 'orch', y: 1162, t: 'Confirm fixes', s: 'only after counterexamples', step: 's8b' },
+  { id: 'a8b', lane: 'agent', y: 1162, t: 'Adversary, confirming run', s: 'old tests, then the fixes only', step: 's8b' },
+  { id: 'u8', lane: 'user', y: 1162, t: 'Rules on the attack', s: 'dispute, scope, 3 rounds used', step: 's6' },
+  { id: 's9', lane: 'orch', y: 1270, t: '9 · Sync', s: 'fetch, rebase if behind', step: 's9' },
+  { id: 'a9', lane: 'agent', y: 1270, t: 'Sync agent', s: 'only on a rebase conflict', step: 's9' },
+  { id: 's10', lane: 'orch', y: 1370, t: '10 · Final gate', s: 'on the finished branch', step: 's10' },
+  { id: 'a10', lane: 'agent', y: 1370, t: 'Final agent', s: 'whole gate, full suite once', step: 's10' },
+  { id: 's11', lane: 'orch', y: 1470, t: '11 · Ship', s: 'push branch, open PR', step: 's11' },
+  { id: 'u11', lane: 'user', y: 1470, t: 'Reviews the PR', s: 'can overrule listed assumptions', step: 's11' },
+  { id: 's12', lane: 'orch', y: 1570, t: '12 · Watch CI', s: 'skipped when the repo has no CI', step: 's12' },
+  { id: 'a12', lane: 'agent', y: 1570, t: 'Review-fix agent', s: 'failing check, up to 3 rounds', step: 's12' },
+  { id: 's13', lane: 'orch', y: 1670, t: '13 · Follow-ups', s: 'ask once, file what is picked', step: 's13' },
+  { id: 'u13', lane: 'user', y: 1670, t: 'Picks follow-ups', s: 'chooses which become issues', step: 's13' },
+  { id: 'end', lane: 'orch', y: 1756, t: 'Done', shape: 'pill', step: 's13' },
+];
+const N = Object.fromEntries(NODES.map(n => [n.id, n]));
+const hh = n => n.shape === 'diamond' ? DH : (n.id === 'end' ? 18 : HH);
+
+const gBack = add(svg, 'g', {}), gEdges = add(svg, 'g', {}), gNodes = add(svg, 'g', {}), gLabels = add(svg, 'g', {});
+
+// parallel group behind the adversary and the reviewers
+add(gBack, 'rect', { x: 656, y: 726, width: 228, height: 176, rx: 12, class: 'par' });
+
+function edge(d, kind, extra) {
+  return add(gEdges, 'path', Object.assign({ d, class: 'edge ' + kind, 'marker-end': 'url(#m-' + kind.split(' ')[0] + ')' }, extra || {}));
+}
+function label(x, y, text, anchor, cls) {
+  add(gLabels, 'text', { x, y, 'text-anchor': anchor || 'middle', class: 'lbl ' + (cls || '') }, text);
+}
+function down(a, b, text) {
+  const x = X[N[a].lane];
+  edge('M' + x + ',' + (N[a].y + hh(N[a])) + ' V' + (N[b].y - hh(N[b])), 'flow');
+  if (text) label(x + 8, (N[a].y + hh(N[a]) + N[b].y - hh(N[b])) / 2 + 4, text, 'start');
+}
+// orchestrator <-> sub-agent pair on one row
+function pair(row, top, bottom, cond) {
+  const y = N[row].y, k = 'call' + (cond ? ' cond' : '');
+  edge('M550,' + (y - 9) + ' H670', k);
+  edge('M670,' + (y + 9) + ' H550', k);
+  label(610, y - 14, top);
+  label(610, y + 22, bottom);
+}
+// orchestrator <-> user pair on one row
+function ask(row, top, bottom) {
+  const y = N[row].y;
+  edge('M350,' + (y - 9) + ' H260', 'ask');
+  if (bottom) edge('M260,' + (y + 9) + ' H350', 'ask');
+  label(305, y - 14, top);
+  if (bottom) label(305, y + 22, bottom);
+}
+
+edge('M260,76 H350', 'flow');
+down('setup', 's1'); down('s1', 's2'); down('s2', 's3', 'seams confirmed');
+down('s3', 'd3'); down('d3', 's4', 'all seams done');
+down('s4', 's5'); down('s5', 's6', 'green'); down('s6', 's7', 'same turn');
+down('s7', 'd8', 'both reported'); down('d8', 's8', 'findings or counterexamples');
+down('s8', 's8b'); down('s8b', 's9', 'clean'); down('s9', 's10'); down('s10', 's11', 'green');
+down('s11', 's12'); down('s12', 's13', 'checks pass'); down('s13', 'end');
+
+pair('s1', 'brief', 'report, 35 lines');
+pair('s3', 'brief', 'status report');
+pair('s4', 'brief', 'status report');
+pair('s5', 'brief', 'status report');
+pair('s6', 'adversary brief', 'counterexamples');
+pair('s7', 'Skill call', 'findings');
+pair('s8', 'all findings', 'status report');
+pair('s8b', 'confirming brief', 'result');
+pair('s9', 'on conflict', 'rebased', true);
+pair('s10', 'brief', 'status report');
+pair('s12', 'check fails', 'push, watch again', true);
+label(770, 720, 'run together, fixed in one pass', 'middle');
+
+ask('s2', 'asks', 'confirms');
+ask('s11', 'Pull Request');
+ask('s13', 'asks once', 'picks');
+
+// seam loop: done or partial goes back up to the dispatch
+edge('M520,' + (470 - DH * 0.3 - 1) + ' V' + (370 + HH), 'loop');
+label(528, 413, 'done: next seam', 'start', 'loop');
+label(528, 427, 'partial: fresh agent, same seam', 'start', 'loop');
+// seam escalation to the user and back
+edge('M350,470 H260', 'esc');
+label(305, 462, 'needs-decision', 'middle', 'esc');
+label(305, 485, 'blocked', 'middle', 'esc');
+edge('M160,' + (470 - HH) + ' V370 H350', 'esc');
+label(258, 362, 'answer recorded, agent resumed', 'middle', 'esc');
+
+// skip step 8 when nothing was found
+edge('M350,962 H325 V1270 H350', 'loop');
+label(318, 954, 'nothing found:', 'end', 'loop');
+label(318, 968, 'skip step 8', 'end', 'loop');
+// fix and confirm loop
+edge('M520,' + (1162 - HH) + ' V' + (1062 + HH), 'loop');
+label(528, 1107, 'new counterexamples:', 'start', 'loop');
+label(528, 1121, 'fix again, up to 3 rounds', 'start', 'loop');
+// adversary escalation
+edge('M350,1162 H260', 'esc', { 'marker-start': 'url(#m-esc)' });
+
+// nodes
+let selected = null;
+function select(stepId) {
+  selected = stepId;
+  document.getElementById('panel').innerHTML = stepHtml(BY_ID[stepId]);
+  svg.querySelectorAll('.node').forEach(g => g.classList.toggle('sel', g.dataset.step === stepId));
+}
+NODES.forEach(n => {
+  const x = X[n.lane], y = n.y;
+  const g = add(gNodes, 'g', { class: 'node ' + n.lane, tabindex: 0, role: 'button', 'data-step': n.step, 'aria-label': n.t + (n.s ? ': ' + n.s : '') });
+  if (n.shape === 'diamond') {
+    add(g, 'polygon', { class: 'shape', points: [x - HW, y, x, y - DH, x + HW, y, x, y + DH].join(' ') });
+  } else {
+    const h = hh(n);
+    add(g, 'rect', { class: 'shape', x: x - HW, y: y - h, width: HW * 2, height: h * 2, rx: n.shape === 'pill' ? h : 8 });
+  }
+  add(g, 'text', { class: 't', x, y: n.s ? y - 3 : y + 4.5, 'text-anchor': 'middle' }, n.t);
+  if (n.s) add(g, 'text', { class: 's', x, y: y + 13, 'text-anchor': 'middle' }, n.s);
+  g.addEventListener('click', () => select(n.step));
+  g.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); select(n.step); } });
+});
+select('setup');
+</script>
+</body>
+</html>
