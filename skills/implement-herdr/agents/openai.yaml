@@ -1,0 +1,5 @@
+interface:
+  display_name: "Implement (Herdr)"
+  short_description: "Build work from a spec, sub-agents in Herdr"
+policy:
+  allow_implicit_invocation: false
