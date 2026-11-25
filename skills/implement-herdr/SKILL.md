@@ -28,6 +28,17 @@ Every sub-agent runs as an interactive `claude` in its own herdr-core terminal, 
 
 Never commit or push on `main` or `master`. While this skill is active, a PreToolUse hook (`scripts/block-commit-on-main.sh`) blocks `git commit` and `git push` on either branch in your session, and any push that targets one. Sub-agents run in their own `claude` sessions and don't inherit that hook, so the brief also has them check the branch before every commit.
 
+## Run for a spec
+
+When the launch prompt says implement-spec started you, the ticket is one of several that land on a shared **integration branch**, not a PR of its own. Read the launch file it names first. It gives the **parent** (the implement-spec orchestrator's hc address), the **base** (the integration branch), your ticket branch and worktree, a shared notes directory, and the path for your report. Then run the Flow with these changes:
+
+- **Before you start.** Step 1 is unchanged. In steps 2 and 3, the parent has already made your worktree and branch: stay in it, and check that `git branch --show-current` is the ticket branch and that `git merge-base --is-ancestor <base> HEAD` succeeds. If either check fails on a branch with no commits of its own, run `git reset --hard <base>`; otherwise report `blocked`.
+- **Base.** Wherever this skill says `origin/<default>` (the review's fixed point, the sync, the role lines, the adversary brief), use `<base>`. It is a local branch every worktree shares, so it needs no fetch. Write it into the plan's Spec line.
+- **Notes.** Add the notes directory to the plan's Spec line, and have the explore agent read the notes there before it reads the code, then only fill what they leave out.
+- **Sync.** Step 9 rebases onto `<base>`, which has moved if other tickets merged while you worked. It is what keeps your branch mergeable, so never skip it.
+- **No PR.** Skip steps 11 to 13: don't push, open a PR, or watch CI. The parent merges your branch and opens one PR for the whole spec. In step 14, write the follow-ups into your report instead of asking the user.
+- **Report.** Once the final gate is green, write a report of at most 15 lines with the Write tool to the report path (`status: done | blocked`, the commits, the follow-ups, and the Decisions marked `assumed`), then run `hc send <parent> "<ticket>: <status>, report in <path>"` and stop. Leave your worktree and branch in place: the parent removes them once it has merged.
+
 ## Shell commands in a worktree
 
 A worktree session refuses any shell command it can't verify stays inside the worktree, and each refusal costs a turn and the output that went into it. Chaining with `&&` or `;` and piping into a filter are fine. What gets refused: heredocs, command substitution (`$(...)` or backticks), shell variables, and loops or conditionals. So create and edit files with the Write and Edit tools, never `cat <<EOF` or an inline script, and when one command needs another's output, run them as two calls. This holds for you and for every sub-agent, so both briefs state it.

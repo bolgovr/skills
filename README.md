@@ -29,6 +29,7 @@ Reachable only by typing the skill's name.
 - [`grill-with-docs`](./skills/grill-with-docs/SKILL.md): a relentless interview to sharpen a plan or design, which also creates docs (ADRs and glossary) as it goes.
 - [`implement`](./skills/implement/SKILL.md): implement a piece of work based on a spec or set of tickets.
 - [`implement-herdr`](./skills/implement-herdr/SKILL.md): `/implement` with every sub-agent running in its own Herdr tab (`hc`), where you can watch, answer, and steer it. Run it from a session inside Herdr.
+- [`implement-spec`](./skills/implement-spec/SKILL.md): implement a whole spec from its tickets, worked as a task graph: each frontier ticket runs `/implement-herdr` in its own Herdr tab and worktree, merged into one integration branch that opens as a single PR. Run it from a session inside Herdr.
 - [`refactor`](./skills/refactor/SKILL.md): plan a refactor from a symbol you name, examining every module it reaches and their tests, and publish a plan that `/implement` can run.
 - [`retro`](./skills/retro/SKILL.md): run a retrospective on a coding session and suggest improvements to the agent's environment (navigation, checks, standards, tooling).
 - [`setup-repo-skills`](./skills/setup-repo-skills/SKILL.md): configure a repo for the engineering skills, its issue tracker and domain doc layout. Run once before first use of the other engineering skills.
