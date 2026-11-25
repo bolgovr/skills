@@ -32,6 +32,7 @@ Reachable only by typing the skill's name.
 - [`refactor`](./skills/refactor/SKILL.md): plan a refactor from a symbol you name, examining every module it reaches and their tests, and publish a plan that `/implement` can run.
 - [`retro`](./skills/retro/SKILL.md): run a retrospective on a coding session and suggest improvements to the agent's environment (navigation, checks, standards, tooling).
 - [`setup-repo-skills`](./skills/setup-repo-skills/SKILL.md): configure a repo for the engineering skills, its issue tracker and domain doc layout. Run once before first use of the other engineering skills.
+- [`show-me`](./skills/show-me/SKILL.md): explain a domain, data, or programming concept as an interactive HTML page, grounded in the current repo when the topic lives there, and open it in the browser.
 - [`smartass`](./skills/smartass/SKILL.md): a staff-engineer audit of the repo that ignores the status quo and proposes evidence-backed overhauls, from quick wins up to framework swaps or rewrites.
 - [`to-tickets`](./skills/to-tickets/SKILL.md): break a plan, spec, or the current conversation into tracer-bullet tickets with blocking edges, published to the configured tracker.
 

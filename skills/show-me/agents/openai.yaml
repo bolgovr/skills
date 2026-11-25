@@ -1,0 +1,5 @@
+interface:
+  display_name: "Show Me"
+  short_description: "Explain a concept as an interactive HTML page"
+policy:
+  allow_implicit_invocation: false
