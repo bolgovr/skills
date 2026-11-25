@@ -29,9 +29,11 @@ Reachable only by typing the skill's name.
 - [`grill-with-docs`](./skills/grill-with-docs/SKILL.md): a relentless interview to sharpen a plan or design, which also creates docs (ADRs and glossary) as it goes.
 - [`implement`](./skills/implement/SKILL.md): implement a piece of work based on a spec or set of tickets.
 - [`implement-herdr`](./skills/implement-herdr/SKILL.md): `/implement` with every sub-agent running in its own Herdr tab (`hc`), where you can watch, answer, and steer it. Run it from a session inside Herdr.
+- [`implement-spec`](./skills/implement-spec/SKILL.md): implement a whole spec from its tickets, worked as a task graph: each frontier ticket runs `/implement-herdr` in its own Herdr tab and worktree, merged into one integration branch that opens as a single PR. Run it from a session inside Herdr.
 - [`refactor`](./skills/refactor/SKILL.md): plan a refactor from a symbol you name, examining every module it reaches and their tests, and publish a plan that `/implement` can run.
 - [`retro`](./skills/retro/SKILL.md): run a retrospective on a coding session and suggest improvements to the agent's environment (navigation, checks, standards, tooling).
 - [`setup-repo-skills`](./skills/setup-repo-skills/SKILL.md): configure a repo for the engineering skills, its issue tracker and domain doc layout. Run once before first use of the other engineering skills.
+- [`show-me`](./skills/show-me/SKILL.md): explain a domain, data, or programming concept as an interactive HTML page, grounded in the current repo when the topic lives there, and open it in the browser.
 - [`smartass`](./skills/smartass/SKILL.md): a staff-engineer audit of the repo that ignores the status quo and proposes evidence-backed overhauls, from quick wins up to framework swaps or rewrites.
 - [`to-tickets`](./skills/to-tickets/SKILL.md): break a plan, spec, or the current conversation into tracer-bullet tickets with blocking edges, published to the configured tracker.
 
@@ -46,7 +48,7 @@ Reachable by the model or the user.
 - [`grilling`](./skills/grilling/SKILL.md): grill the user relentlessly about a plan, decision, or idea, stress-testing their thinking round by round.
 - [`merge-impact`](./skills/merge-impact/SKILL.md): work out what merging a PR would do (blast radius, changed business rules, a Merge, Skim, or Review carefully verdict) and write it into the PR description, before the PR is opened where it can.
 - [`observable`](./skills/observable/SKILL.md): structured logging discipline for any language, so features that run in production leave evidence they work.
-- [`quality-gate`](./skills/quality-gate/SKILL.md): run the language-appropriate quality gate (build, lint, typecheck, tests) before implementation work is considered done, and check the change against clean architecture and SOLID.
+- [`quality-gate`](./skills/quality-gate/SKILL.md): run the language-appropriate quality gate (build, lint, typecheck, tests, and CRAP and duplication metrics) before implementation work is considered done, and check the change against clean architecture and SOLID.
 
 ## Develop
 

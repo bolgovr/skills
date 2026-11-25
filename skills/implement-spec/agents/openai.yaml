@@ -1,0 +1,5 @@
+interface:
+  display_name: "Implement Spec"
+  short_description: "Build a whole spec's tickets as a task graph"
+policy:
+  allow_implicit_invocation: false
