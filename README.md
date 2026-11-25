@@ -48,7 +48,7 @@ Reachable by the model or the user.
 - [`grilling`](./skills/grilling/SKILL.md): grill the user relentlessly about a plan, decision, or idea, stress-testing their thinking round by round.
 - [`merge-impact`](./skills/merge-impact/SKILL.md): work out what merging a PR would do (blast radius, changed business rules, a Merge, Skim, or Review carefully verdict) and write it into the PR description, before the PR is opened where it can.
 - [`observable`](./skills/observable/SKILL.md): structured logging discipline for any language, so features that run in production leave evidence they work.
-- [`quality-gate`](./skills/quality-gate/SKILL.md): run the language-appropriate quality gate (build, lint, typecheck, tests) before implementation work is considered done, and check the change against clean architecture and SOLID.
+- [`quality-gate`](./skills/quality-gate/SKILL.md): run the language-appropriate quality gate (build, lint, typecheck, tests, and CRAP and duplication metrics) before implementation work is considered done, and check the change against clean architecture and SOLID.
 
 ## Develop
 

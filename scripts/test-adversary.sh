@@ -94,7 +94,7 @@ expect "$QG_MD" 'green' "run the adversary only once every other check is green"
 expect "$QG_MD" 'Skill tool with "adversary"' "dispatch a sub-agent calling the Skill tool with \"adversary\""
 expect "$QG_MD" 'uncommitted' "leave counterexamples uncommitted"
 expect "$QG_MD" 'once more to confirm' "rerun the adversary once more to confirm the fix"
-section "$QG_MD" '## 5. Adversary' | grep -qiF 'at most 3 rounds' ||
+section "$QG_MD" '## 6. Adversary' | grep -qiF 'at most 3 rounds' ||
   fail "skills/quality-gate/SKILL.md Adversary step does not cap its fix-and-confirm loop at 3 rounds"
 
 # Fallbacks.
